@@ -14,6 +14,8 @@ public class UserProfileResponse {
     private boolean isPro;
     private long totalHabits;
     private long totalCompletions;
+    private String avatarUrl;
+    private String bio;
     private LocalDateTime createdAt;
 
     public UserProfileResponse() {}
@@ -47,6 +49,12 @@ public class UserProfileResponse {
 
     public long getTotalCompletions() { return totalCompletions; }
     public void setTotalCompletions(long totalCompletions) { this.totalCompletions = totalCompletions; }
+
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

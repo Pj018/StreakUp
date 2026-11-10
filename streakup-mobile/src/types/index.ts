@@ -15,6 +15,8 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
+  avatarUrl?: string;
+  bio?: string;
   xpPoints: number;
   currentLevel: number;
   streakShields: number;

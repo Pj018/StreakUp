@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import StreakReviveModal from './StreakReviveModal';
 import PaywallModal from './PaywallModal';
 import RoutineSettingsModal from './RoutineSettingsModal';
 import ShareStreakModal from './ShareStreakModal';
+import { PRESET_AVATARS } from './AvatarPickerModal';
 import { triggerHaptic } from '../utils/haptics';
 import soundEffects from '../utils/soundEffects';
 
@@ -83,7 +85,13 @@ export default function TodayScreen() {
           activeOpacity={0.75}
         >
           <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>⚡</Text>
+            {user?.avatarUrl && (user.avatarUrl.startsWith('data:') || user.avatarUrl.startsWith('file:') || user.avatarUrl.startsWith('http')) ? (
+              <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarEmoji}>
+                {PRESET_AVATARS.find(a => a.id === user?.avatarUrl)?.emoji || '⚡'}
+              </Text>
+            )}
           </View>
           <View>
             <Text style={styles.greetingText}>STREAK MASTER</Text>
@@ -414,6 +422,11 @@ const styles = StyleSheet.create({
     borderColor: '#4F46E5',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarEmoji: {
     fontSize: 20,

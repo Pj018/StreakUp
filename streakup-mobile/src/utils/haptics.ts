@@ -28,4 +28,14 @@ export const triggerHaptic = {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch {}
   },
+  error: async () => {
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch {}
+  },
+  selection: async () => {
+    try {
+      await Haptics.selectionAsync();
+    } catch {}
+  },
 };

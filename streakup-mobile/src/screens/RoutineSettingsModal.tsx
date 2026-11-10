@@ -8,6 +8,7 @@ import {
   Switch,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,12 @@ import { useAuth } from '../context/AuthContext';
 import { triggerHaptic } from '../utils/haptics';
 import soundEffects from '../utils/soundEffects';
 import notificationService from '../utils/notificationService';
+
+import AvatarPickerModal, { PRESET_AVATARS } from './AvatarPickerModal';
+import EditProfileModal from './EditProfileModal';
+import ChangePasswordModal from './ChangePasswordModal';
+import TermsAndPrivacyModal from './TermsAndPrivacyModal';
+import PlanComparisonModal from './PlanComparisonModal';
 
 interface Props {
   visible: boolean;
@@ -30,6 +37,14 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
   const [eveningReminder, setEveningReminder] = useState(true);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(soundEffects.isSoundEnabled());
+
+  // Sub-modals state
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsInitialTab, setTermsInitialTab] = useState<'terms' | 'privacy'>('terms');
+  const [showPlanComparison, setShowPlanComparison] = useState(false);
 
   const safeTopPadding = Math.max(insets.top, 46) + 8;
 
@@ -66,12 +81,20 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
     );
   };
 
+  const currentAvatarEmoji =
+    PRESET_AVATARS.find(a => a.id === user?.avatarUrl)?.emoji || '⚡';
+  const hasCustomImage =
+    user?.avatarUrl &&
+    (user.avatarUrl.startsWith('data:') ||
+      user.avatarUrl.startsWith('file:') ||
+      user.avatarUrl.startsWith('http'));
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={[styles.container, { paddingTop: safeTopPadding }]}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>ROUTINE & SETTINGS</Text>
+          <Text style={styles.headerTitle}>PROFILE & SETTINGS</Text>
           <TouchableOpacity
             style={styles.closeBtn}
             onPress={() => {
@@ -87,23 +110,73 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* User Profile Card */}
           <View style={styles.profileCard}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarEmoji}>⚡</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <View style={styles.userNameRow}>
-                <Text style={styles.userName}>{user?.fullName || 'Hero'}</Text>
-                {user?.isPro ? (
-                  <View style={styles.proPill}>
-                    <Text style={styles.proPillText}>★ PRO</Text>
-                  </View>
-                ) : null}
+            <View style={styles.profileTopRow}>
+              {/* Avatar with Camera edit button */}
+              <TouchableOpacity
+                style={styles.avatarContainer}
+                onPress={() => {
+                  triggerHaptic.light();
+                  setShowAvatarPicker(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.avatarCircle}>
+                  {hasCustomImage ? (
+                    <Image source={{ uri: user!.avatarUrl }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarEmoji}>{currentAvatarEmoji}</Text>
+                  )}
+                </View>
+                <View style={styles.cameraBadge}>
+                  <Ionicons name="camera" size={13} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
+
+              <View style={{ flex: 1 }}>
+                <View style={styles.userNameRow}>
+                  <Text style={styles.userName}>{user?.fullName || 'Hero'}</Text>
+                  {user?.isPro ? (
+                    <View style={styles.proPill}>
+                      <Text style={styles.proPillText}>★ PRO</Text>
+                    </View>
+                  ) : null}
+                  <TouchableOpacity
+                    style={styles.editPencilBtn}
+                    onPress={() => {
+                      triggerHaptic.light();
+                      setShowEditProfile(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="pencil" size={14} color="#4F46E5" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.userEmail}>{user?.email || ''}</Text>
+                <Text style={styles.userStatsSub}>
+                  Level {user?.currentLevel ?? 1} • {user?.xpPoints ?? 0} XP • {user?.streakShields ?? 1} Shields
+                </Text>
               </View>
-              <Text style={styles.userEmail}>{user?.email || ''}</Text>
-              <Text style={styles.userStatsSub}>
-                Level {user?.currentLevel ?? 1} • {user?.xpPoints ?? 0} XP • {user?.streakShields ?? 1} Shields
-              </Text>
             </View>
+
+            {/* Discipline Bio (if set) */}
+            {user?.bio ? (
+              <View style={styles.bioBox}>
+                <Ionicons name="sparkles" size={14} color="#EA580C" />
+                <Text style={styles.bioText}>"{user.bio}"</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.addBioBtn}
+                onPress={() => {
+                  triggerHaptic.light();
+                  setShowEditProfile(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="add-circle-outline" size={15} color="#4F46E5" />
+                <Text style={styles.addBioText}>Add Discipline Motto / Bio</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Pro Membership Banner */}
@@ -135,6 +208,22 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
             </View>
           )}
 
+          {/* Feature Comparison Pill */}
+          <TouchableOpacity
+            style={styles.compareBtn}
+            onPress={() => {
+              triggerHaptic.light();
+              setShowPlanComparison(true);
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.compareIcon}>
+              <Ionicons name="stats-chart" size={16} color="#4F46E5" />
+            </View>
+            <Text style={styles.compareBtnText}>Compare Free vs PRO Plans</Text>
+            <Ionicons name="chevron-forward" size={16} color="#64748B" />
+          </TouchableOpacity>
+
           {/* Reminders & Routine Section */}
           <Text style={styles.sectionHeading}>DAILY ROUTINE REMINDERS</Text>
           <View style={styles.settingsGroup}>
@@ -148,7 +237,7 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               </View>
               <Switch
                 value={morningReminder}
-                onValueChange={(val) => {
+                onValueChange={val => {
                   triggerHaptic.light();
                   setMorningReminder(val);
                 }}
@@ -169,7 +258,7 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               </View>
               <Switch
                 value={eveningReminder}
-                onValueChange={(val) => {
+                onValueChange={val => {
                   triggerHaptic.light();
                   setEveningReminder(val);
                 }}
@@ -199,7 +288,7 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               </View>
               <Switch
                 value={hapticsEnabled}
-                onValueChange={(val) => {
+                onValueChange={val => {
                   triggerHaptic.light();
                   setHapticsEnabled(val);
                 }}
@@ -220,7 +309,7 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               </View>
               <Switch
                 value={soundEnabled}
-                onValueChange={(val) => {
+                onValueChange={val => {
                   triggerHaptic.light();
                   setSoundEnabled(val);
                   soundEffects.setSoundEnabled(val);
@@ -256,10 +345,99 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
             )}
           </View>
 
+          {/* Account & Security Section */}
+          <Text style={styles.sectionHeading}>ACCOUNT & SECURITY</Text>
+          <View style={styles.settingsGroup}>
+            <TouchableOpacity
+              style={styles.actionRowItem}
+              onPress={() => {
+                triggerHaptic.light();
+                setShowChangePassword(true);
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.settingIconWrap, { backgroundColor: '#EEF2FF' }]}>
+                <Ionicons name="lock-closed-outline" size={18} color="#4F46E5" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Change Password</Text>
+                <Text style={styles.settingSub}>Update your BCrypt salted account password</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.actionRowItem}
+              onPress={() => {
+                triggerHaptic.light();
+                setShowAvatarPicker(true);
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.settingIconWrap, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="image-outline" size={18} color="#D97706" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Change Profile Photo</Text>
+                <Text style={styles.settingSub}>Upload selfie, gallery photo or pick avatar</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Legal & Compliance Section */}
+          <Text style={styles.sectionHeading}>LEGAL & POLICIES</Text>
+          <View style={styles.settingsGroup}>
+            <TouchableOpacity
+              style={styles.actionRowItem}
+              onPress={() => {
+                triggerHaptic.light();
+                setTermsInitialTab('terms');
+                setShowTermsModal(true);
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.settingIconWrap, { backgroundColor: '#F1F5F9' }]}>
+                <Ionicons name="document-text-outline" size={18} color="#475569" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Terms & Conditions</Text>
+                <Text style={styles.settingSub}>Usage terms, streak rules & subscription guidelines</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.actionRowItem}
+              onPress={() => {
+                triggerHaptic.light();
+                setTermsInitialTab('privacy');
+                setShowTermsModal(true);
+              }}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.settingIconWrap, { backgroundColor: '#ECFDF5' }]}>
+                <Ionicons name="shield-checkmark-outline" size={18} color="#059669" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingTitle}>Privacy Policy</Text>
+                <Text style={styles.settingSub}>Zero data selling • End-to-end encryption</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+
           {/* App Build & Logout */}
           <View style={styles.appMetaCard}>
-            <Text style={styles.metaTitle}>StreakUp Mobile • Build v1.0.0 (Release 58)</Text>
-            <Text style={styles.metaSub}>Spring Boot 3 + PostgreSQL Backend Connected</Text>
+            <View style={styles.metaRow}>
+              <View style={styles.onlineDot} />
+              <Text style={styles.metaTitle}>StreakUp Cloud • Connected to PostgreSQL</Text>
+            </View>
+            <Text style={styles.metaSub}>Build v1.0.0 (Release 58) • Spring Boot 3 Engine</Text>
 
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
               <Ionicons name="log-out-outline" size={18} color="#DC2626" />
@@ -267,6 +445,37 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
             </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Sub-modals */}
+        <AvatarPickerModal
+          visible={showAvatarPicker}
+          onClose={() => setShowAvatarPicker(false)}
+        />
+
+        <EditProfileModal
+          visible={showEditProfile}
+          onClose={() => setShowEditProfile(false)}
+        />
+
+        <ChangePasswordModal
+          visible={showChangePassword}
+          onClose={() => setShowChangePassword(false)}
+        />
+
+        <TermsAndPrivacyModal
+          visible={showTermsModal}
+          initialTab={termsInitialTab}
+          onClose={() => setShowTermsModal(false)}
+        />
+
+        <PlanComparisonModal
+          visible={showPlanComparison}
+          onClose={() => setShowPlanComparison(false)}
+          onUpgradePress={() => {
+            onClose();
+            onOpenPaywall();
+          }}
+        />
       </View>
     </Modal>
   );
@@ -299,37 +508,59 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    padding: 20,
     paddingBottom: 40,
-    gap: 16,
   },
   profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
-    gap: 14,
     shadowColor: '#64748B',
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 10,
     elevation: 2,
+    marginBottom: 16,
+  },
+  profileTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  avatarContainer: {
+    position: 'relative',
   },
   avatarCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#EEF2FF',
-    borderWidth: 2,
-    borderColor: '#4F46E5',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#4F46E5',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarEmoji: {
-    fontSize: 26,
+    fontSize: 28,
+  },
+  cameraBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#4F46E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   userNameRow: {
     flexDirection: 'row',
@@ -341,16 +572,22 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#0F172A',
   },
+  editPencilBtn: {
+    padding: 4,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 8,
+  },
   proPill: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 6,
+    backgroundColor: '#EA580C',
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: 8,
   },
   proPillText: {
-    color: '#FFFFFF',
+    fontSize: 10,
     fontWeight: '900',
-    fontSize: 9,
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   userEmail: {
     fontSize: 12,
@@ -359,24 +596,58 @@ const styles = StyleSheet.create({
   },
   userStatsSub: {
     fontSize: 11,
-    color: '#4F46E5',
+    color: '#059669',
     fontWeight: '700',
     marginTop: 4,
+  },
+  bioBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+  },
+  bioText: {
+    flex: 1,
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#9A3412',
+    fontWeight: '600',
+  },
+  addBioBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    gap: 6,
+  },
+  addBioText: {
+    fontSize: 12,
+    color: '#4F46E5',
+    fontWeight: '700',
   },
   upgradeCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF7ED',
-    borderRadius: 18,
-    padding: 16,
     borderWidth: 1.5,
     borderColor: '#FED7AA',
+    borderRadius: 18,
+    padding: 14,
     gap: 12,
+    marginBottom: 12,
   },
   upgradeIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#FFEDD5',
     justifyContent: 'center',
     alignItems: 'center',
@@ -395,56 +666,89 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ECFDF5',
-    borderRadius: 18,
-    padding: 14,
     borderWidth: 1.5,
     borderColor: '#A7F3D0',
+    borderRadius: 18,
+    padding: 14,
     gap: 12,
+    marginBottom: 12,
   },
   proActiveTitle: {
-    fontSize: 13,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '900',
     color: '#065F46',
   },
   proActiveSub: {
     fontSize: 11,
     color: '#047857',
-    marginTop: 1,
+    marginTop: 2,
+  },
+  compareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 10,
+    marginBottom: 20,
+  },
+  compareIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#EEF2FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  compareBtnText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
   },
   sectionHeading: {
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: '800',
     color: '#64748B',
     letterSpacing: 0.8,
-    marginTop: 6,
+    marginBottom: 10,
+    marginLeft: 4,
+    marginTop: 10,
   },
   settingsGroup: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
+    borderRadius: 18,
+    borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#64748B',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    marginBottom: 16,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
     gap: 12,
-    paddingVertical: 4,
+  },
+  actionRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 13,
+    gap: 12,
   },
   settingIconWrap: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   settingTitle: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#0F172A',
   },
   settingSub: {
@@ -455,79 +759,87 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#F1F5F9',
-    marginVertical: 12,
   },
   testBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2FF',
     paddingVertical: 12,
-    borderRadius: 12,
     gap: 8,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
   },
   testBtnText: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#4F46E5',
   },
   soundTestRow: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 4,
+    paddingVertical: 12,
   },
   soundTestBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#FED7AA',
-    borderRadius: 10,
+    borderColor: '#E2E8F0',
     paddingVertical: 10,
+    borderRadius: 12,
     gap: 6,
   },
   soundTestBtnText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#C2410C',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
   },
   appMetaCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 16,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    padding: 16,
+    marginTop: 10,
     alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  onlineDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#10B981',
   },
   metaTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
-    color: '#64748B',
+    color: '#1E293B',
   },
   metaSub: {
-    fontSize: 10,
-    color: '#94A3B8',
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    justifyContent: 'center',
     backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: '#FCA5A5',
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 14,
+    gap: 8,
+    marginTop: 16,
   },
   logoutBtnText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '800',
     color: '#DC2626',
   },
