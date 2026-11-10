@@ -146,7 +146,7 @@ export default function StreakReviveModal({ habit, visible, onClose }: Props) {
             <Text style={styles.title}>Don't Lose Your Streak!</Text>
             <Text style={styles.desc}>
               You missed <Text style={styles.boldText}>"{habit.title}"</Text> yesterday.
-              Your <Text style={styles.streakHighlight}>{habit.longestStreak || 5}-Day Streak 🔥</Text> is about to be wiped out!
+              Your <Text style={styles.streakHighlight}>{Math.max(1, habit.longestStreak || habit.currentStreak)}-Day Streak 🔥</Text> is about to be wiped out!
             </Text>
 
             <View style={styles.rewardCard}>
@@ -286,7 +286,7 @@ export default function StreakReviveModal({ habit, visible, onClose }: Props) {
 
             <View style={styles.revivedStatsBox}>
               <View style={styles.revivedStatItem}>
-                <Text style={styles.revivedStatNumber}>+{habit.longestStreak || 5}</Text>
+                <Text style={styles.revivedStatNumber}>+{Math.max(1, habit.longestStreak || habit.currentStreak)}</Text>
                 <Text style={styles.revivedStatLabel}>Streak Restored</Text>
               </View>
               <View style={styles.dividerVertical} />

@@ -90,11 +90,24 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     if (!user || user.id === 'demo-user-1') return;
     setIsLoading(true);
     try {
-      const res = await apiClient.get('/habits');
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        setHabits(res.data);
+      const [habitsRes, badgesRes, heatmapRes] = await Promise.allSettled([
+        apiClient.get('/habits'),
+        apiClient.get('/gamification/badges'),
+        apiClient.get('/gamification/heatmap'),
+      ]);
+
+      if (habitsRes.status === 'fulfilled' && Array.isArray(habitsRes.value.data) && habitsRes.value.data.length > 0) {
+        setHabits(habitsRes.value.data);
       } else {
         setHabits(STARTER_HABITS);
+      }
+
+      if (badgesRes.status === 'fulfilled' && Array.isArray(badgesRes.value.data) && badgesRes.value.data.length > 0) {
+        setBadges(badgesRes.value.data);
+      }
+
+      if (heatmapRes.status === 'fulfilled' && Array.isArray(heatmapRes.value.data)) {
+        setHeatmap(heatmapRes.value.data);
       }
     } catch (err) {
       // Keep existing state
@@ -106,16 +119,16 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (user) {
       if (user.id === 'demo-user-1') {
-        setHabits([
-          { ...STARTER_HABITS[0], currentStreak: 12, longestStreak: 15 },
-          { ...STARTER_HABITS[1], currentStreak: 8, longestStreak: 8 },
-          { ...STARTER_HABITS[2], currentStreak: 5, longestStreak: 14, streakStatus: 'BROKEN' },
-        ]);
+        setHabits(STARTER_HABITS.map(h => ({ ...h, currentStreak: 0, longestStreak: 0, completedToday: false })));
+        setBadges(DEFAULT_BADGES);
+        setHeatmap([]);
       } else {
         refreshHabits();
       }
     } else {
       setHabits(STARTER_HABITS);
+      setBadges(DEFAULT_BADGES);
+      setHeatmap([]);
     }
   }, [user?.id]);
 
@@ -156,9 +169,12 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const res = await apiClient.post(`/habits/${habitId}/complete`);
       setHabits(prev =>
-        prev.map(h => (h.id === habitId ? { ...h, completedToday: true, currentStreak: res.data.currentStreak } : h))
+        prev.map(h => (h.id === habitId ? { ...h, completedToday: true, currentStreak: res.data.currentStreak, longestStreak: Math.max(res.data.currentStreak, h.longestStreak) } : h))
       );
-      await refreshProfile();
+      await Promise.allSettled([
+        refreshProfile(),
+        refreshHabits(),
+      ]);
       return {
         success: true,
         xpEarned: res.data.xpEarned,

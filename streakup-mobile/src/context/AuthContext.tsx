@@ -29,15 +29,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { token: jwt, userId, email: userEmail, fullName, xpPoints, currentLevel, streakShields, isPro } = res.data;
       setToken(jwt);
       setAuthToken(jwt);
-      setUser({
+      const userObj: User = {
         id: userId,
         email: userEmail,
-        fullName,
-        xpPoints,
-        currentLevel,
-        streakShields,
-        isPro,
-      });
+        fullName: fullName || 'Hero',
+        xpPoints: xpPoints ?? 0,
+        currentLevel: currentLevel ?? 1,
+        streakShields: streakShields ?? 1,
+        isPro: isPro ?? false,
+        totalHabits: 3,
+        totalCompletions: 0,
+      };
+      setUser(userObj);
+
+      // Fetch real updated profile stats from backend
+      try {
+        const profRes = await apiClient.get('/user/profile');
+        if (profRes.data) {
+          setUser(profRes.data);
+        }
+      } catch (profErr) {
+        // Fall back to userObj
+      }
     } catch (err: any) {
       const errMsg =
         err.response?.data?.message ||
@@ -60,15 +73,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { token: jwt, userId, email: userEmail, fullName: name, xpPoints, currentLevel, streakShields, isPro } = res.data;
       setToken(jwt);
       setAuthToken(jwt);
-      setUser({
+      const userObj: User = {
         id: userId,
         email: userEmail,
-        fullName: name,
-        xpPoints,
-        currentLevel,
-        streakShields,
-        isPro,
-      });
+        fullName: name || fullName || 'Hero',
+        xpPoints: xpPoints ?? 0,
+        currentLevel: currentLevel ?? 1,
+        streakShields: streakShields ?? 1,
+        isPro: isPro ?? false,
+        totalHabits: 3,
+        totalCompletions: 0,
+      };
+      setUser(userObj);
+
+      // Fetch real updated profile stats from backend
+      try {
+        const profRes = await apiClient.get('/user/profile');
+        if (profRes.data) {
+          setUser(profRes.data);
+        }
+      } catch (profErr) {
+        // Fall back to userObj
+      }
+
       Alert.alert('Welcome to StreakUp! 🎉', 'Your account has been created successfully.');
     } catch (err: any) {
       const errMsg =
@@ -88,14 +115,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const quickDemoLogin = () => {
     const demoUser: User = {
       id: 'demo-user-1',
-      email: 'alex@streakup.app',
-      fullName: 'Alex Hunter',
-      xpPoints: 180,
-      currentLevel: 2,
-      streakShields: 2,
+      email: 'demo@streakup.app',
+      fullName: 'Streak User',
+      xpPoints: 0,
+      currentLevel: 1,
+      streakShields: 1,
       isPro: false,
       totalHabits: 3,
-      totalCompletions: 18,
+      totalCompletions: 0,
     };
     setUser(demoUser);
     setToken('demo-token');

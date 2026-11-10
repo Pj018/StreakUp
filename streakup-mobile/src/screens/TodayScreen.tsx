@@ -95,7 +95,7 @@ export default function TodayScreen() {
           {/* Level Pill */}
           <View style={styles.levelPill}>
             <Ionicons name="star" size={13} color="#D97706" />
-            <Text style={styles.levelPillText}>Lv. {user?.currentLevel || 2}</Text>
+            <Text style={styles.levelPillText}>Lv. {user?.currentLevel ?? 1}</Text>
           </View>
 
           {/* Streak Shields Pill */}
@@ -105,7 +105,7 @@ export default function TodayScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name="shield-checkmark" size={14} color="#0284C7" />
-            <Text style={styles.shieldPillText}>{user?.streakShields || 1}</Text>
+            <Text style={styles.shieldPillText}>{user?.streakShields ?? 1}</Text>
           </TouchableOpacity>
 
           {/* Pro Pill */}
@@ -292,7 +292,9 @@ export default function TodayScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.reviveAdTitle}>Watch Video Ad to Save Streak</Text>
-                      <Text style={styles.reviveAdSub}>10s Video • Restores {habit.longestStreak || 5}-Day Streak</Text>
+                      <Text style={styles.reviveAdSub}>
+                        10s Video • Restores {Math.max(1, habit.longestStreak || habit.currentStreak)}-Day Streak
+                      </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color="#DC2626" />
                   </TouchableOpacity>
@@ -369,8 +371,8 @@ export default function TodayScreen() {
         onClose={() => setShowShareModal(false)}
         streakCount={highestStreak}
         userName={user?.fullName || 'Streak Master'}
-        level={user?.currentLevel || 1}
-        xpPoints={user?.xpPoints || 0}
+        level={user?.currentLevel ?? 1}
+        xpPoints={user?.xpPoints ?? 0}
         completedToday={completedCount}
         totalHabits={totalCount}
       />

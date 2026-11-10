@@ -12,20 +12,49 @@ import { useHabits } from '../context/HabitContext';
 
 export default function StatsScreen() {
   const { user } = useAuth();
-  const { habits } = useHabits();
+  const { habits, heatmap } = useHabits();
   const insets = useSafeAreaInsets();
 
-  const currentXp = user?.xpPoints || 140;
-  const currentLevel = user?.currentLevel || 2;
+  const currentXp = user?.xpPoints ?? 0;
+  const currentLevel = user?.currentLevel ?? 1;
   const xpNeeded = 100 - (currentXp % 100);
   const progressPercent = Math.min(100, Math.round(((currentXp % 100) / 100) * 100));
 
-  const totalCompletions = user?.totalCompletions || 18;
-  const longestStreakOverall = Math.max(0, ...habits.map(h => h.longestStreak));
+  const totalCompletions = user?.totalCompletions ?? habits.filter(h => h.completedToday).length;
+  const longestStreakOverall = Math.max(0, ...habits.map(h => h.longestStreak ?? 0));
+  const shieldsLeft = user?.streakShields ?? 1;
 
+  const getRankTitle = (lvl: number) => {
+    if (lvl <= 1) return 'Routine Starter';
+    if (lvl === 2) return 'Habit Builder';
+    if (lvl === 3) return 'Discipline Adept';
+    if (lvl === 4) return 'Consistency Pro';
+    return 'Discipline Master';
+  };
+
+  const rankDescription =
+    currentXp === 0
+      ? 'Complete daily habits to earn XP and level up your rank!'
+      : totalCompletions === 1
+      ? 'Great start! Keep building momentum daily.'
+      : 'Consistently crushing goals. Keep your streak alive!';
+
+  // Real 8-week (56 days) activity matrix based on genuine completion logs
+  const todayCompletions = habits.filter(h => h.completedToday).length;
   const heatmapDays = Array.from({ length: 56 }).map((_, idx) => {
-    const count = (idx % 2 === 0 || idx % 5 === 0) ? (idx % 3) + 1 : 0;
-    return { day: idx, count };
+    // idx 0 = 55 days ago, idx 55 = today
+    if (heatmap && heatmap.length >= 56) {
+      const entry = heatmap[heatmap.length - 56 + idx];
+      let count = entry?.count ?? 0;
+      if (idx === 55 && todayCompletions > count) {
+        count = todayCompletions;
+      }
+      return { day: idx, count };
+    }
+    return {
+      day: idx,
+      count: idx === 55 ? todayCompletions : 0,
+    };
   });
 
   const getHeatmapColor = (count: number) => {
@@ -53,8 +82,10 @@ export default function StatsScreen() {
               <View style={styles.rankPill}>
                 <Text style={styles.rankPillText}>CURRENT RANK</Text>
               </View>
-              <Text style={styles.levelTitle}>Level {currentLevel}: Discipline Master</Text>
-              <Text style={styles.levelDesc}>You are more consistent than 84% of members!</Text>
+              <Text style={styles.levelTitle}>
+                Level {currentLevel}: {getRankTitle(currentLevel)}
+              </Text>
+              <Text style={styles.levelDesc}>{rankDescription}</Text>
             </View>
             <View style={styles.starCircle}>
               <Ionicons name="star" size={26} color="#D97706" />
@@ -82,7 +113,7 @@ export default function StatsScreen() {
 
           <View style={styles.metricCard}>
             <Text style={styles.metricEmoji}>🛡️</Text>
-            <Text style={styles.metricValue}>{user?.streakShields || 1}</Text>
+            <Text style={styles.metricValue}>{shieldsLeft}</Text>
             <Text style={styles.metricLabel}>Shields Left</Text>
           </View>
 

@@ -99,9 +99,9 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
                   </View>
                 ) : null}
               </View>
-              <Text style={styles.userEmail}>{user?.email || 'alex@streakup.app'}</Text>
+              <Text style={styles.userEmail}>{user?.email || ''}</Text>
               <Text style={styles.userStatsSub}>
-                Level {user?.currentLevel || 2} • {user?.xpPoints || 140} XP • {user?.streakShields || 1} Shields
+                Level {user?.currentLevel ?? 1} • {user?.xpPoints ?? 0} XP • {user?.streakShields ?? 1} Shields
               </Text>
             </View>
           </View>
