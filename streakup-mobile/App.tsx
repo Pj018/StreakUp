@@ -1,3 +1,4 @@
+// StreakUp Mobile App - Main Application Navigator with OTA Live Update Support
 import React, { useState } from 'react';
 import {
   View,
