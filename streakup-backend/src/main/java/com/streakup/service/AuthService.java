@@ -20,17 +20,23 @@ public class AuthService {
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
     private final GamificationService gamificationService;
+    private final HabitService habitService;
+    private final EmailService emailService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtUtils jwtUtils,
                        AuthenticationManager authenticationManager,
-                       GamificationService gamificationService) {
+                       GamificationService gamificationService,
+                       HabitService habitService,
+                       EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtils = jwtUtils;
         this.authenticationManager = authenticationManager;
         this.gamificationService = gamificationService;
+        this.habitService = habitService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -46,8 +52,14 @@ public class AuthService {
         );
         user = userRepository.save(user);
 
+        // Seed initial starter habits with currentStreak = 0
+        habitService.createStarterHabitsForUser(user);
+
         // Check initial starter badges
         gamificationService.checkAndAwardBadges(user, null);
+
+        // Send welcome email to new user
+        emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
 
         String token = jwtUtils.generateToken(user.getEmail(), user.getId());
 

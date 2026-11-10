@@ -16,7 +16,7 @@ interface HabitContextType {
   applyShield: (habitId: string) => Promise<boolean>;
 }
 
-const DEFAULT_HABITS: Habit[] = [
+const STARTER_HABITS: Habit[] = [
   {
     id: 'h1',
     title: 'Morning 2L Water',
@@ -27,9 +27,9 @@ const DEFAULT_HABITS: Habit[] = [
     color: '#06B6D4',
     icon: 'water',
     isArchived: false,
-    createdAt: '2026-03-01T00:00:00',
-    currentStreak: 12,
-    longestStreak: 15,
+    createdAt: new Date().toISOString(),
+    currentStreak: 0,
+    longestStreak: 0,
     streakStatus: 'ACTIVE',
     completedToday: false,
   },
@@ -43,9 +43,9 @@ const DEFAULT_HABITS: Habit[] = [
     color: '#EF4444',
     icon: 'fitness',
     isArchived: false,
-    createdAt: '2026-03-05T00:00:00',
-    currentStreak: 8,
-    longestStreak: 8,
+    createdAt: new Date().toISOString(),
+    currentStreak: 0,
+    longestStreak: 0,
     streakStatus: 'ACTIVE',
     completedToday: false,
   },
@@ -59,18 +59,18 @@ const DEFAULT_HABITS: Habit[] = [
     color: '#8B5CF6',
     icon: 'book',
     isArchived: false,
-    createdAt: '2026-03-10T00:00:00',
-    currentStreak: 5,
-    longestStreak: 14,
-    streakStatus: 'BROKEN', // Missed yesterday! Eligible for Rewarded Ad revive
+    createdAt: new Date().toISOString(),
+    currentStreak: 0,
+    longestStreak: 0,
+    streakStatus: 'ACTIVE',
     completedToday: false,
   },
 ];
 
 const DEFAULT_BADGES: Badge[] = [
-  { id: 'b1', code: 'FIRST_STEP', name: 'First Step', description: 'Complete your first habit', requiredStreak: 0, requiredXp: 10, unlocked: true, unlockedAt: '2026-03-01' },
-  { id: 'b2', code: 'STREAK_3', name: 'Spark of Discipline', description: 'Achieve a 3-day streak', requiredStreak: 3, requiredXp: 0, unlocked: true, unlockedAt: '2026-03-03' },
-  { id: 'b3', code: 'STREAK_7', name: '7-Day Warrior', description: 'Maintain a 7-day streak', requiredStreak: 7, requiredXp: 0, unlocked: true, unlockedAt: '2026-03-07' },
+  { id: 'b1', code: 'FIRST_STEP', name: 'First Step', description: 'Complete your first habit', requiredStreak: 0, requiredXp: 10, unlocked: false },
+  { id: 'b2', code: 'STREAK_3', name: 'Spark of Discipline', description: 'Achieve a 3-day streak', requiredStreak: 3, requiredXp: 0, unlocked: false },
+  { id: 'b3', code: 'STREAK_7', name: '7-Day Warrior', description: 'Maintain a 7-day streak', requiredStreak: 7, requiredXp: 0, unlocked: false },
   { id: 'b4', code: 'STREAK_21', name: 'Habit Builder', description: 'Hit the 21-day psychological habit milestone', requiredStreak: 21, requiredXp: 0, unlocked: false },
   { id: 'b5', code: 'STREAK_30', name: '30-Day Master', description: 'Dominate your routine for 30 consecutive days', requiredStreak: 30, requiredXp: 0, unlocked: false },
   { id: 'b6', code: 'LEVEL_5', name: 'Rising Star', description: 'Earn 500 XP and reach Level 5', requiredStreak: 0, requiredXp: 500, unlocked: false },
@@ -81,22 +81,43 @@ const HabitContext = createContext<HabitContextType | undefined>(undefined);
 
 export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, refreshProfile } = useAuth();
-  const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
+  const [habits, setHabits] = useState<Habit[]>(STARTER_HABITS);
   const [badges, setBadges] = useState<Badge[]>(DEFAULT_BADGES);
   const [heatmap, setHeatmap] = useState<HeatmapDay[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const refreshHabits = async () => {
+    if (!user || user.id === 'demo-user-1') return;
     setIsLoading(true);
     try {
       const res = await apiClient.get('/habits');
-      setHabits(res.data);
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setHabits(res.data);
+      } else {
+        setHabits(STARTER_HABITS);
+      }
     } catch (err) {
-      // Keep state
+      // Keep existing state
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      if (user.id === 'demo-user-1') {
+        setHabits([
+          { ...STARTER_HABITS[0], currentStreak: 12, longestStreak: 15 },
+          { ...STARTER_HABITS[1], currentStreak: 8, longestStreak: 8 },
+          { ...STARTER_HABITS[2], currentStreak: 5, longestStreak: 14, streakStatus: 'BROKEN' },
+        ]);
+      } else {
+        refreshHabits();
+      }
+    } else {
+      setHabits(STARTER_HABITS);
+    }
+  }, [user?.id]);
 
   const createHabit = async (habitData: Partial<Habit>) => {
     // Check Free limit (Max 4 habits)

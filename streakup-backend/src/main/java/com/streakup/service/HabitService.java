@@ -80,6 +80,10 @@ public class HabitService {
 
     public List<HabitResponse> getUserHabits(User user) {
         List<Habit> habits = habitRepository.findByUserIdAndIsArchivedFalseOrderByCreatedAtDesc(user.getId());
+        if (habits.isEmpty()) {
+            createStarterHabitsForUser(user);
+            habits = habitRepository.findByUserIdAndIsArchivedFalseOrderByCreatedAtDesc(user.getId());
+        }
         LocalDate today = LocalDate.now();
 
         return habits.stream().map(habit -> {
@@ -87,6 +91,35 @@ public class HabitService {
             boolean completedToday = habitLogRepository.existsByHabitIdAndCompletedDate(habit.getId(), today);
             return mapToResponse(habit, streak, completedToday);
         }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void createStarterHabitsForUser(User user) {
+        createStarterHabit(user, "Morning 2L Water", "Drink 2 liters of water before noon", com.streakup.model.enums.Category.HEALTH, "water", "#06B6D4");
+        createStarterHabit(user, "Workout / Cardio 30m", "High intensity workout or 5km run", com.streakup.model.enums.Category.FITNESS, "fitness", "#EF4444");
+        createStarterHabit(user, "Read 15 Pages", "Read self-improvement or tech book", com.streakup.model.enums.Category.STUDY, "book", "#8B5CF6");
+    }
+
+    private void createStarterHabit(User user, String title, String desc, com.streakup.model.enums.Category category, String icon, String color) {
+        Habit habit = new Habit();
+        habit.setUser(user);
+        habit.setTitle(title);
+        habit.setDescription(desc);
+        habit.setCategory(category);
+        habit.setFrequencyType(com.streakup.model.enums.FrequencyType.DAILY);
+        habit.setTargetPerDay(1);
+        habit.setIcon(icon);
+        habit.setColor(color);
+        habit.setArchived(false);
+        habit = habitRepository.save(habit);
+
+        Streak streak = new Streak();
+        streak.setUser(user);
+        streak.setHabit(habit);
+        streak.setCurrentStreak(0);
+        streak.setLongestStreak(0);
+        streak.setStatus(StreakStatus.ACTIVE);
+        streakRepository.save(streak);
     }
 
     @Transactional

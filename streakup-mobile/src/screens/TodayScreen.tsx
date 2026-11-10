@@ -120,11 +120,19 @@ export default function TodayScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <View style={styles.streakBadgeMini}>
-                <Text style={styles.streakBadgeMiniText}>DISCIPLINE STREAK</Text>
+                <Text style={styles.streakBadgeMiniText}>
+                  {highestStreak > 0 ? 'DISCIPLINE STREAK' : 'NEW ROUTINE'}
+                </Text>
               </View>
-              <Text style={styles.streakDaysTitle}>{highestStreak} DAYS ON FIRE</Text>
+              <Text style={styles.streakDaysTitle}>
+                {highestStreak > 0
+                  ? `${highestStreak} ${highestStreak === 1 ? 'DAY' : 'DAYS'} ON FIRE`
+                  : 'DAY 1 - READY TO IGNITE'}
+              </Text>
               <Text style={styles.streakDaysSubtitle}>
-                {completionPercentage === 100
+                {highestStreak === 0
+                  ? 'Complete your first task today to ignite your streak!'
+                  : completionPercentage === 100
                   ? '🏆 Daily goals crushed! Streak extended.'
                   : `Complete all tasks to keep your flame glowing!`}
               </Text>
