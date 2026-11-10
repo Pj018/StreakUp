@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 // Live HTTPS Cloudflare tunnel pointing to local Spring Boot backend (port 8088)
 // This works everywhere: on 5G mobile data, Wi-Fi, and bypasses Android cleartext restrictions
-export const API_BASE_URL = 'https://distinct-deviant-embassy-pounds.trycloudflare.com/api/v1';
+export const API_BASE_URL = 'https://growth-calculated-cheap-time.trycloudflare.com/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
