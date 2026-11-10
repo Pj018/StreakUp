@@ -39,7 +39,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isPro,
       });
     } catch (err: any) {
-      const errMsg = err.response?.data?.message || err.response?.data?.error || 'Invalid email or password. Please verify your credentials.';
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        (err.code === 'ECONNABORTED'
+          ? 'Connection timed out. Please check your internet connection.'
+          : err.message === 'Network Error'
+          ? 'Unable to connect to server. Please check your internet connection.'
+          : 'Invalid email or password. Please verify your credentials.');
       Alert.alert('Sign In Failed', errMsg);
     } finally {
       setIsLoading(false);
@@ -64,7 +71,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       Alert.alert('Welcome to StreakUp! 🎉', 'Your account has been created successfully.');
     } catch (err: any) {
-      const errMsg = err.response?.data?.error || err.response?.data?.message || 'Registration failed. This email may already be in use.';
+      const errMsg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        (err.code === 'ECONNABORTED'
+          ? 'Connection timed out. Please check your internet connection.'
+          : err.message === 'Network Error'
+          ? 'Unable to reach server. Please check your internet connection.'
+          : 'Registration failed. This email may already be in use.');
       Alert.alert('Sign Up Failed', errMsg);
     } finally {
       setIsLoading(false);
