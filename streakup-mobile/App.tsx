@@ -4,9 +4,9 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  StatusBar,
   ActivityIndicator,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -45,7 +45,7 @@ function MainApp() {
 
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar style="dark" />
         {authScreen === 'Login' ? (
           <LoginScreen navigation={authNav} />
         ) : (
@@ -73,7 +73,7 @@ function MainApp() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar style="dark" />
 
       {/* Active Screen */}
       <View style={styles.screenContainer}>{renderScreen()}</View>

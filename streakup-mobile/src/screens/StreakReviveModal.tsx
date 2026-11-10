@@ -82,7 +82,7 @@ export default function StreakReviveModal({ habit, visible, onClose }: Props) {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (adState === 'PLAYING') {
       progressAnim.setValue(0);
       Animated.timing(progressAnim, {
