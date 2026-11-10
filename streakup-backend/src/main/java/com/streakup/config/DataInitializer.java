@@ -1,10 +1,13 @@
 package com.streakup.config;
 
 import com.streakup.model.entity.Badge;
+import com.streakup.model.entity.User;
 import com.streakup.repository.BadgeRepository;
+import com.streakup.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,9 +17,15 @@ public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
     private final BadgeRepository badgeRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(BadgeRepository badgeRepository) {
+    public DataInitializer(BadgeRepository badgeRepository,
+                           UserRepository userRepository,
+                           PasswordEncoder passwordEncoder) {
         this.badgeRepository = badgeRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -36,6 +45,19 @@ public class DataInitializer implements CommandLineRunner {
 
             badgeRepository.saveAll(defaultBadges);
             log.info("✅ 7 Default badges seeded successfully!");
+        }
+
+        if (userRepository.findByEmail("alex@streakup.app").isEmpty()) {
+            User demoUser = new User(
+                    "alex@streakup.app",
+                    passwordEncoder.encode("password123"),
+                    "Alex Hunter"
+            );
+            demoUser.setXpPoints(140);
+            demoUser.setCurrentLevel(2);
+            demoUser.setStreakShields(2);
+            userRepository.save(demoUser);
+            log.info("✅ Default demo user alex@streakup.app seeded (password: password123)");
         }
     }
 }

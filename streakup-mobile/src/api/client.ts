@@ -26,4 +26,15 @@ export const setAuthToken = (token: string | null) => {
   }
 };
 
+// Response Interceptor for 401 Unauthorized handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      setAuthToken(null);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;

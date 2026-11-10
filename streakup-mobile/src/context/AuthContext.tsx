@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 import apiClient, { setAuthToken } from '../api/client';
 import { User } from '../types';
 
@@ -17,18 +18,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>({
-    id: 'demo-user-1',
-    email: 'alex@streakup.app',
-    fullName: 'Alex Hunter',
-    xpPoints: 140,
-    currentLevel: 2,
-    streakShields: 2,
-    isPro: false,
-    totalHabits: 3,
-    totalCompletions: 14,
-  });
-  const [token, setToken] = useState<string | null>('demo-jwt-token');
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
@@ -47,9 +38,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         streakShields,
         isPro,
       });
-    } catch (err) {
-      console.warn('Backend login unavailable, switching to demo mode');
-      quickDemoLogin();
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || err.response?.data?.error || 'Invalid email or password. Please verify your credentials.';
+      Alert.alert('Sign In Failed', errMsg);
     } finally {
       setIsLoading(false);
     }
@@ -71,9 +62,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         streakShields,
         isPro,
       });
-    } catch (err) {
-      console.warn('Backend register unavailable, using local session');
-      quickDemoLogin();
+      Alert.alert('Welcome to StreakUp! 🎉', 'Your account has been created successfully.');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error || err.response?.data?.message || 'Registration failed. This email may already be in use.';
+      Alert.alert('Sign Up Failed', errMsg);
     } finally {
       setIsLoading(false);
     }
