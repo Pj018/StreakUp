@@ -17,6 +17,7 @@ import StreakReviveModal from './StreakReviveModal';
 import PaywallModal from './PaywallModal';
 import RoutineSettingsModal from './RoutineSettingsModal';
 import { triggerHaptic } from '../utils/haptics';
+import soundEffects from '../utils/soundEffects';
 
 type FilterType = 'ALL' | 'PENDING' | 'DONE';
 
@@ -43,9 +44,12 @@ export default function TodayScreen() {
 
   const handleComplete = async (habit: Habit) => {
     if (habit.completedToday) return;
-    triggerHaptic.success();
+    soundEffects.playCompleteSound();
     const res = await completeHabit(habit.id);
     if (res.success) {
+      if (res.levelUp) {
+        setTimeout(() => soundEffects.playLevelUpSound(), 350);
+      }
       setCelebrationToast(`🎉 +10 XP! "${habit.title}" completed!`);
       setTimeout(() => setCelebrationToast(null), 3500);
     }

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Habit } from '../types';
 import { useHabits } from '../context/HabitContext';
 import { triggerHaptic } from '../utils/haptics';
+import soundEffects from '../utils/soundEffects';
 
 const { width } = Dimensions.get('window');
 
@@ -112,7 +113,7 @@ export default function StreakReviveModal({ habit, visible, onClose }: Props) {
   };
 
   const handleAdFinished = async () => {
-    triggerHaptic.heavy();
+    soundEffects.playFlameSound();
     await reviveStreakWithAd(habit.id);
     setAdState('REWARDED');
 

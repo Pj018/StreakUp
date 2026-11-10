@@ -15,6 +15,17 @@ import { useHabits } from '../context/HabitContext';
 import { useAuth } from '../context/AuthContext';
 import { Category } from '../types';
 import PaywallModal from './PaywallModal';
+import soundEffects from '../utils/soundEffects';
+import notificationService from '../utils/notificationService';
+import { triggerHaptic } from '../utils/haptics';
+
+const REMINDER_PRESETS = [
+  { id: 'r1', label: '🌅 08:00 AM', hour: 8, minute: 0, timeStr: '08:00:00' },
+  { id: 'r2', label: '☀️ 01:00 PM', hour: 13, minute: 0, timeStr: '13:00:00' },
+  { id: 'r3', label: '🌆 06:00 PM', hour: 18, minute: 0, timeStr: '18:00:00' },
+  { id: 'r4', label: '🌙 09:00 PM', hour: 21, minute: 0, timeStr: '21:00:00' },
+  { id: 'r0', label: 'None', hour: -1, minute: -1, timeStr: '' },
+];
 
 const CATEGORIES: Category[] = [
   'HEALTH',
@@ -36,6 +47,7 @@ export default function HabitsManageScreen() {
   const [description, setDescription] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('HEALTH');
   const [selectedColor, setSelectedColor] = useState('#4F46E5');
+  const [selectedReminder, setSelectedReminder] = useState(REMINDER_PRESETS[0]);
   const [showPaywall, setShowPaywall] = useState(false);
 
   const handleCreate = async () => {
@@ -51,6 +63,7 @@ export default function HabitsManageScreen() {
       frequencyType: 'DAILY',
       color: selectedColor,
       icon: 'flame',
+      reminderTime: selectedReminder.timeStr || undefined,
     });
 
     if (!result.success) {
@@ -62,9 +75,24 @@ export default function HabitsManageScreen() {
       return;
     }
 
+    if (selectedReminder.hour >= 0) {
+      notificationService.scheduleHabitReminder(
+        'habit-' + Date.now(),
+        title.trim(),
+        selectedReminder.hour,
+        selectedReminder.minute
+      );
+    }
+    soundEffects.playCompleteSound();
+
     setTitle('');
     setDescription('');
-    Alert.alert('Success 🎉', 'New habit created! Track it daily to level up.');
+    Alert.alert(
+      'Success 🎉',
+      selectedReminder.hour >= 0
+        ? `New habit created with daily ${selectedReminder.label.substring(3)} reminder chime!`
+        : 'New habit created! Track it daily to level up.'
+    );
   };
 
   const handleArchive = (habitId: string, habitTitle: string) => {
@@ -160,6 +188,36 @@ export default function HabitsManageScreen() {
             ))}
           </View>
 
+          <Text style={styles.label}>Daily Reminder Sound & Alert</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+            {REMINDER_PRESETS.map(preset => (
+              <TouchableOpacity
+                key={preset.id}
+                style={[
+                  styles.catPill,
+                  selectedReminder.id === preset.id && styles.catPillSelected,
+                ]}
+                onPress={() => {
+                  triggerHaptic.light();
+                  setSelectedReminder(preset);
+                  if (preset.hour >= 0) {
+                    soundEffects.playCompleteSound();
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.catText,
+                    selectedReminder.id === preset.id && styles.catTextSelected,
+                  ]}
+                >
+                  {preset.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
           <TouchableOpacity style={styles.addBtn} onPress={handleCreate} activeOpacity={0.85}>
             <Text style={styles.addBtnText}>+ Add to Daily Routine</Text>
           </TouchableOpacity>
@@ -174,7 +232,7 @@ export default function HabitsManageScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.itemTitle}>{habit.title}</Text>
                 <Text style={styles.itemMeta}>
-                  {habit.category} • Streak: {habit.currentStreak} Days 🔥
+                  {habit.category} • Streak: {habit.currentStreak} Days 🔥{habit.reminderTime ? ` • 🔔 ${habit.reminderTime.substring(0, 5)}` : ''}
                 </Text>
               </View>
               <TouchableOpacity

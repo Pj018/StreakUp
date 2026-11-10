@@ -13,6 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { triggerHaptic } from '../utils/haptics';
+import soundEffects from '../utils/soundEffects';
+import notificationService from '../utils/notificationService';
 
 interface Props {
   visible: boolean;
@@ -27,16 +29,22 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
   const [morningReminder, setMorningReminder] = useState(true);
   const [eveningReminder, setEveningReminder] = useState(true);
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(soundEffects.isSoundEnabled());
 
   const safeTopPadding = Math.max(insets.top, 46) + 8;
 
-  const handleTestReminder = () => {
-    triggerHaptic.success();
+  const handleTestReminder = async () => {
+    soundEffects.playCompleteSound();
+    await notificationService.scheduleHabitReminder(
+      'preview-test',
+      'Daily Routine Check-in',
+      new Date().getHours(),
+      (new Date().getMinutes() + 1) % 60
+    );
     Alert.alert(
-      '🔔 Habit Reminder (Preview)',
-      '🔥 "StreakUp Reminder: Keep your 12-day streak alive! 3 habits remaining today."',
-      [{ text: 'Got it!' }]
+      '🔔 Reminder & Sound Tested!',
+      'Sound effect played and reminder notification scheduled successfully.',
+      [{ text: 'Awesome!' }]
     );
   };
 
@@ -207,19 +215,45 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
                 <Ionicons name="volume-medium-outline" size={20} color="#D97706" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Reward Chimes</Text>
-                <Text style={styles.settingSub}>Play celebration audio on leveling up</Text>
+                <Text style={styles.settingTitle}>Audio Chimes & Effects</Text>
+                <Text style={styles.settingSub}>Play satisfying sounds on task completions & level-ups</Text>
               </View>
               <Switch
                 value={soundEnabled}
                 onValueChange={(val) => {
                   triggerHaptic.light();
                   setSoundEnabled(val);
+                  soundEffects.setSoundEnabled(val);
                 }}
                 trackColor={{ false: '#E2E8F0', true: '#FDE68A' }}
                 thumbColor={soundEnabled ? '#D97706' : '#94A3B8'}
               />
             </View>
+
+            {soundEnabled && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.soundTestRow}>
+                  <TouchableOpacity
+                    style={styles.soundTestBtn}
+                    onPress={() => soundEffects.playCompleteSound()}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="sparkles" size={14} color="#EA580C" />
+                    <Text style={styles.soundTestBtnText}>Test Chime 🔔</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.soundTestBtn}
+                    onPress={() => soundEffects.playLevelUpSound()}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="trophy" size={14} color="#D97706" />
+                    <Text style={styles.soundTestBtnText}>Test Fanfare 🎺</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
 
           {/* App Build & Logout */}
@@ -438,6 +472,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: '#4F46E5',
+  },
+  soundTestRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  soundTestBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: 10,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  soundTestBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#C2410C',
   },
   appMetaCard: {
     backgroundColor: '#FFFFFF',
