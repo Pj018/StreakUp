@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,76 +18,173 @@ import { triggerHaptic } from '../utils/haptics';
 export default function LoginScreen({ navigation }: any) {
   const { login, quickDemoLogin, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const safeTopPadding = Math.max(insets.top, 46) + 12;
+  const safeTopPadding = Math.max(insets.top, 46) + 10;
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Required', 'Please fill in both email and password.');
+      Alert.alert('Required', 'Please enter both your email address and password.');
       return;
     }
     triggerHaptic.light();
     await login(email.trim(), password.trim());
   };
 
+  const handleDemoLogin = () => {
+    triggerHaptic.success();
+    quickDemoLogin();
+  };
+
   return (
     <View style={[styles.container, { paddingTop: safeTopPadding }]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
-        <View style={styles.content}>
-          {/* Logo / Flame */}
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoFlame}>🔥</Text>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 20 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header Branding */}
+          <View style={styles.headerSection}>
+            <View style={styles.logoBadgeWrap}>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoEmoji}>🔥</Text>
+              </View>
+              <View style={styles.communityPill}>
+                <Ionicons name="sparkles" size={12} color="#EA580C" />
+                <Text style={styles.communityPillText}>STREAK MASTER CLUB</Text>
+              </View>
+            </View>
+
+            <Text style={styles.appName}>StreakUp</Text>
+            <Text style={styles.welcomeSubtitle}>
+              Welcome back! Build discipline, earn XP, and protect your daily streak.
+            </Text>
           </View>
 
-          <Text style={styles.appName}>StreakUp</Text>
-          <Text style={styles.appTagline}>Gamified Habits & Routine Planner</Text>
+          {/* Login Form Card */}
+          <View style={styles.card}>
+            <Text style={styles.cardHeader}>SIGN IN TO YOUR ROUTINE</Text>
 
-          {/* Form Card */}
-          <View style={styles.form}>
-            <Text style={styles.inputLabel}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="alex@streakup.app"
-              placeholderTextColor="#94A3B8"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={setEmail}
-            />
+            {/* Email Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="mail-outline" size={18} color="#64748B" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="alex@streakup.app"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+            </View>
 
-            <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              placeholderTextColor="#94A3B8"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            {/* Password Input */}
+            <View style={styles.inputGroup}>
+              <View style={styles.passwordLabelRow}>
+                <Text style={styles.label}>Password</Text>
+              </View>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••••"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeBtn}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={19}
+                    color="#64748B"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={isLoading} activeOpacity={0.85}>
+            {/* Sign In CTA */}
+            <TouchableOpacity
+              style={[styles.loginBtn, isLoading && styles.btnDisabled]}
+              onPress={handleLogin}
+              disabled={isLoading}
+              activeOpacity={0.85}
+            >
               <Text style={styles.loginBtnText}>{isLoading ? 'Signing In...' : 'Sign In'}</Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
             </TouchableOpacity>
 
-            {/* Quick Demo Login Button */}
-            <TouchableOpacity style={styles.demoBtn} onPress={quickDemoLogin} activeOpacity={0.8}>
-              <Ionicons name="flash" size={16} color="#D97706" />
-              <Text style={styles.demoBtnText}>Instant Demo Preview (No Password)</Text>
+            <View style={styles.dividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>OR TRY WITHOUT LOGIN</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Instant Demo Preview Button */}
+            <TouchableOpacity
+              style={styles.demoBtn}
+              onPress={handleDemoLogin}
+              activeOpacity={0.8}
+            >
+              <View style={styles.demoIconWrap}>
+                <Ionicons name="flash" size={18} color="#D97706" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.demoBtnTitle}>Instant Demo Preview</Text>
+                <Text style={styles.demoBtnSub}>Explore all 4 tabs with preloaded data</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#D97706" />
             </TouchableOpacity>
           </View>
 
+          {/* Social Proof / Gamification Highlights */}
+          <View style={styles.perksRow}>
+            <View style={styles.perkItem}>
+              <Text style={styles.perkEmoji}>🛡️</Text>
+              <Text style={styles.perkLabel}>Streak Shields</Text>
+            </View>
+            <View style={styles.perkItem}>
+              <Text style={styles.perkEmoji}>⚡</Text>
+              <Text style={styles.perkLabel}>Level & XP</Text>
+            </View>
+            <View style={styles.perkItem}>
+              <Text style={styles.perkEmoji}>📊</Text>
+              <Text style={styles.perkLabel}>8-Week Grid</Text>
+            </View>
+          </View>
+
+          {/* Footer Register Link */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Don't have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.signUpLink}>Sign Up Free</Text>
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic.light();
+                navigation.navigate('Register');
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.signUpLink}>Create Account Free</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
@@ -100,111 +198,233 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
+  scrollContent: {
+    paddingHorizontal: 20,
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingTop: 10,
+  },
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
+  },
+  logoBadgeWrap: {
+    alignItems: 'center',
+    marginBottom: 10,
+    position: 'relative',
   },
   logoCircle: {
     width: 76,
     height: 76,
-    borderRadius: 38,
-    backgroundColor: '#FFEDD5',
+    borderRadius: 24,
+    backgroundColor: '#FFF7ED',
     borderWidth: 2,
-    borderColor: '#FDBA74',
+    borderColor: '#FED7AA',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  logoFlame: {
+  logoEmoji: {
     fontSize: 40,
   },
+  communityPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FDBA74',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 20,
+    gap: 4,
+    marginTop: -8,
+  },
+  communityPillText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#C2410C',
+    letterSpacing: 0.5,
+  },
   appName: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
     color: '#0F172A',
+    letterSpacing: -0.5,
   },
-  appTagline: {
+  welcomeSubtitle: {
     fontSize: 13,
     color: '#64748B',
-    marginBottom: 28,
-    marginTop: 4,
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 19,
+    paddingHorizontal: 16,
   },
-  form: {
+  card: {
     width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 22,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    marginBottom: 20,
     shadowColor: '#64748B',
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
     shadowRadius: 10,
     elevation: 3,
+    marginBottom: 16,
   },
-  inputLabel: {
+  cardHeader: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#64748B',
+    letterSpacing: 1,
+    marginBottom: 16,
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  label: {
     fontSize: 12,
     fontWeight: '800',
     color: '#334155',
     marginBottom: 6,
   },
-  input: {
+  passwordLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderRadius: 14,
-    paddingHorizontal: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 12,
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
     paddingVertical: 12,
-    color: '#0F172A',
     fontSize: 14,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    marginBottom: 14,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  eyeBtn: {
+    padding: 6,
   },
   loginBtn: {
-    backgroundColor: '#4F46E5',
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 4,
-    shadowColor: '#4F46E5',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  loginBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 15,
-  },
-  demoBtn: {
-    marginTop: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FEF3C7',
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    paddingVertical: 13,
+    backgroundColor: '#EA580C',
+    paddingVertical: 14,
     borderRadius: 14,
-    gap: 6,
+    gap: 8,
+    marginTop: 6,
+    shadowColor: '#EA580C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  demoBtnText: {
-    color: '#B45309',
+  btnDisabled: {
+    opacity: 0.7,
+  },
+  loginBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+    gap: 10,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E2E8F0',
+  },
+  dividerText: {
+    fontSize: 10,
     fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+  },
+  demoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    borderRadius: 16,
+    padding: 12,
+    gap: 10,
+  },
+  demoIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FDE68A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  demoBtnTitle: {
     fontSize: 13,
+    fontWeight: '900',
+    color: '#92400E',
+  },
+  demoBtnSub: {
+    fontSize: 10,
+    color: '#B45309',
+    marginTop: 1,
+  },
+  perksRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+  },
+  perkItem: {
+    alignItems: 'center',
+    gap: 3,
+  },
+  perkEmoji: {
+    fontSize: 18,
+  },
+  perkLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#475569',
   },
   footerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 4,
   },
   footerText: {
-    color: '#64748B',
     fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
   },
   signUpLink: {
-    color: '#4F46E5',
-    fontWeight: '800',
     fontSize: 13,
+    fontWeight: '900',
+    color: '#EA580C',
   },
 });
