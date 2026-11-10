@@ -34,11 +34,6 @@ export default function LoginScreen({ navigation }: any) {
     await login(email.trim(), password.trim());
   };
 
-  const handleDemoLogin = () => {
-    triggerHaptic.success();
-    quickDemoLogin();
-  };
-
   return (
     <View style={[styles.container, { paddingTop: safeTopPadding }]}>
       <KeyboardAvoidingView
@@ -130,28 +125,6 @@ export default function LoginScreen({ navigation }: any) {
             >
               <Text style={styles.loginBtnText}>{isLoading ? 'Signing In...' : 'Sign In'}</Text>
               <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
-            </TouchableOpacity>
-
-            <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR TRY WITHOUT LOGIN</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            {/* Instant Demo Preview Button */}
-            <TouchableOpacity
-              style={styles.demoBtn}
-              onPress={handleDemoLogin}
-              activeOpacity={0.8}
-            >
-              <View style={styles.demoIconWrap}>
-                <Ionicons name="flash" size={18} color="#D97706" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.demoBtnTitle}>Instant Demo Preview</Text>
-                <Text style={styles.demoBtnSub}>Explore all 4 tabs with preloaded data</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#D97706" />
             </TouchableOpacity>
           </View>
 
