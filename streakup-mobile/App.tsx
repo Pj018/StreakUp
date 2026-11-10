@@ -1,5 +1,5 @@
 // StreakUp Mobile App - Main Application Navigator with OTA Live Update Support
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Updates from 'expo-updates';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { HabitProvider } from './src/context/HabitContext';
@@ -174,6 +175,25 @@ function MainApp() {
 }
 
 export default function App() {
+  useEffect(() => {
+    async function checkForLiveUpdates() {
+      try {
+        if (__DEV__) return;
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          await Updates.reloadAsync();
+        }
+      } catch (e) {
+        // Safe fallback if offline
+      }
+    }
+
+    checkForLiveUpdates();
+    const interval = setInterval(checkForLiveUpdates, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
