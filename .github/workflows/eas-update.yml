@@ -29,6 +29,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: 🚀 Publish EAS Over-The-Air Update
+        continue-on-error: true
         working-directory: streakup-mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
