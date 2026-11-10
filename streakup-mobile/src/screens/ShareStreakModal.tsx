@@ -34,7 +34,7 @@ export default function ShareStreakModal({
   totalHabits,
 }: Props) {
   const displayStreak = Math.max(1, streakCount);
-  const shareMessage = `🔥 I'm on a ${displayStreak}-day discipline streak on StreakUp!\n\n⚡ Level ${level} Explorer • ${xpPoints} XP\n🎯 Completed ${completedToday}/${totalHabits} daily habits today.\n\nBuilding daily consistency! Download StreakUp to ignite your streak: https://streakup.app 🚀`;
+  const shareMessage = `🔥 I'm on a ${displayStreak}-day discipline streak on StreakUp!\n\n⚡ Level ${level} Explorer • ${xpPoints} XP\n🎯 Completed ${completedToday}/${totalHabits} daily habits today.\n\nBuilding daily consistency! Keep your discipline flame glowing! 🚀\n#StreakUp #DailyDiscipline`;
 
   const handleShareWhatsApp = async () => {
     triggerHaptic.success();
