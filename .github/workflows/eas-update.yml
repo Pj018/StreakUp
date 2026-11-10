@@ -11,7 +11,6 @@ jobs:
   update:
     name: EAS Over-The-Air Update
     runs-on: ubuntu-latest
-    if: "${{ secrets.EXPO_TOKEN != '' }}"
     steps:
       - name: 🏗 Checkout repository
         uses: actions/checkout@v4
@@ -32,4 +31,4 @@ jobs:
         working-directory: streakup-mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: eas update --auto
+        run: npx eas-cli update --branch preview --message "Automated GitHub Actions live update" --non-interactive
