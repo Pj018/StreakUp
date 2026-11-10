@@ -16,10 +16,19 @@ import { Habit } from '../types';
 import StreakReviveModal from './StreakReviveModal';
 import PaywallModal from './PaywallModal';
 import RoutineSettingsModal from './RoutineSettingsModal';
+import ShareStreakModal from './ShareStreakModal';
 import { triggerHaptic } from '../utils/haptics';
 import soundEffects from '../utils/soundEffects';
 
 type FilterType = 'ALL' | 'PENDING' | 'DONE';
+
+const DISCIPLINE_QUOTES = [
+  { quote: "Discipline is choosing between what you want now, and what you want most.", author: "Abraham Lincoln" },
+  { quote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", author: "Will Durant" },
+  { quote: "You do not rise to the level of your goals. You fall to the level of your systems.", author: "James Clear" },
+  { quote: "Small disciplines repeated with consistency every day lead to great achievements.", author: "John C. Maxwell" },
+  { quote: "It’s not what we do once in a while that shapes our lives. It’s what we do consistently.", author: "Tony Robbins" },
+];
 
 export default function TodayScreen() {
   const { user } = useAuth();
@@ -28,8 +37,11 @@ export default function TodayScreen() {
   const [revivingHabit, setRevivingHabit] = useState<Habit | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('ALL');
   const [celebrationToast, setCelebrationToast] = useState<string | null>(null);
+
+  const todayQuote = DISCIPLINE_QUOTES[new Date().getDate() % DISCIPLINE_QUOTES.length];
 
   const completedCount = habits.filter(h => h.completedToday).length;
   const totalCount = habits.length;
@@ -163,6 +175,35 @@ export default function TodayScreen() {
               />
             </View>
           </View>
+
+          {/* Share Streak Banner */}
+          <TouchableOpacity
+            style={styles.shareStreakBtn}
+            onPress={() => {
+              triggerHaptic.light();
+              setShowShareModal(true);
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={styles.shareLeft}>
+              <Ionicons name="share-social" size={15} color="#EA580C" />
+              <Text style={styles.shareStreakBtnText}>Share Streak to WhatsApp</Text>
+            </View>
+            <View style={styles.shareRight}>
+              <Text style={styles.sharePillText}>Story Card</Text>
+              <Ionicons name="chevron-forward" size={13} color="#EA580C" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* ================= DAILY MORNING SPARK ================= */}
+        <View style={styles.dailySparkCard}>
+          <View style={styles.sparkHeaderRow}>
+            <Ionicons name="bulb-outline" size={15} color="#D97706" />
+            <Text style={styles.sparkLabel}>DAILY DISCIPLINE SPARK</Text>
+          </View>
+          <Text style={styles.sparkQuote}>"{todayQuote.quote}"</Text>
+          <Text style={styles.sparkAuthor}>— {todayQuote.author}</Text>
         </View>
 
         {/* ================= FILTER CHIPS ================= */}
@@ -320,6 +361,18 @@ export default function TodayScreen() {
         visible={showSettings}
         onClose={() => setShowSettings(false)}
         onOpenPaywall={() => setShowPaywall(true)}
+      />
+
+      {/* Social Streak Story Card Modal */}
+      <ShareStreakModal
+        visible={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        streakCount={highestStreak}
+        userName={user?.fullName || 'Streak Master'}
+        level={user?.currentLevel || 1}
+        xpPoints={user?.xpPoints || 0}
+        completedToday={completedCount}
+        totalHabits={totalCount}
       />
     </View>
   );
@@ -542,6 +595,80 @@ const styles = StyleSheet.create({
   gaugeFill: {
     height: '100%',
     borderRadius: 5,
+  },
+  shareStreakBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#FED7AA',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginTop: 12,
+  },
+  shareLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  shareRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  shareStreakBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  sharePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#EA580C',
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  dailySparkCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sparkHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  sparkLabel: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#D97706',
+    letterSpacing: 0.8,
+  },
+  sparkQuote: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1E293B',
+    lineHeight: 19,
+    fontStyle: 'italic',
+  },
+  sparkAuthor: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+    marginTop: 4,
+    textAlign: 'right',
   },
   filterRow: {
     flexDirection: 'row',

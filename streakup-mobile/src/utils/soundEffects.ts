@@ -1,38 +1,15 @@
 import { Platform } from 'react-native';
 import { triggerHaptic } from './haptics';
 
-let Audio: any = null;
+let AudioModule: any = null;
 try {
-  Audio = require('expo-av').Audio;
+  AudioModule = require('expo-audio');
 } catch (e) {
-  // Graceful fallback if native module is not linked
+  // Graceful fallback
 }
 
 class SoundEffectsService {
   private soundEnabled: boolean = true;
-  private soundObjects: { [key: string]: any } = {};
-
-  constructor() {
-    this.configureAudio();
-  }
-
-  private isConfigured = false;
-
-  private async configureAudio() {
-    if (!Audio || Platform.OS === 'web' || this.isConfigured) return;
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-      this.isConfigured = true;
-    } catch (e) {
-      // Ignore audio mode errors
-    }
-  }
 
   public setSoundEnabled(enabled: boolean) {
     this.soundEnabled = enabled;
@@ -48,20 +25,13 @@ class SoundEffectsService {
   }
 
   private async playSound(asset: any) {
-    if (!this.soundEnabled || !Audio) return;
+    if (!this.soundEnabled) return;
     try {
-      await this.configureAudio();
-      const { sound } = await Audio.Sound.createAsync(
-        asset,
-        { shouldPlay: true, volume: 1.0 }
-      );
-      await sound.playAsync();
-      sound.setOnPlaybackStatusUpdate((status: any) => {
-        if (status.didJustFinish) {
-          sound.unloadAsync().catch(() => {});
-        }
-      });
-    } catch (e: any) {
+      if (AudioModule && AudioModule.createAudioPlayer) {
+        const player = AudioModule.createAudioPlayer(asset);
+        player.play();
+      }
+    } catch (e) {
       // Audio playback fallback
     }
   }
@@ -94,3 +64,4 @@ class SoundEffectsService {
 
 export const soundEffects = new SoundEffectsService();
 export default soundEffects;
+
