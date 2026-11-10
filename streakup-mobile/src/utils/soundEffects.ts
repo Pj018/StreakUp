@@ -16,14 +16,19 @@ class SoundEffectsService {
     this.configureAudio();
   }
 
+  private isConfigured = false;
+
   private async configureAudio() {
-    if (!Audio || Platform.OS === 'web') return;
+    if (!Audio || Platform.OS === 'web' || this.isConfigured) return;
     try {
       await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
         shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
       });
+      this.isConfigured = true;
     } catch (e) {
       // Ignore audio mode errors
     }
@@ -45,13 +50,18 @@ class SoundEffectsService {
   private async playSound(asset: any) {
     if (!this.soundEnabled || !Audio) return;
     try {
-      const { sound } = await Audio.Sound.createAsync(asset, { shouldPlay: true, volume: 1.0 });
+      await this.configureAudio();
+      const { sound } = await Audio.Sound.createAsync(
+        asset,
+        { shouldPlay: true, volume: 1.0 }
+      );
+      await sound.playAsync();
       sound.setOnPlaybackStatusUpdate((status: any) => {
         if (status.didJustFinish) {
           sound.unloadAsync().catch(() => {});
         }
       });
-    } catch (e) {
+    } catch (e: any) {
       // Audio playback fallback
     }
   }
