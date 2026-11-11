@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-// Live HTTPS Cloudflare tunnel pointing to local Spring Boot backend (port 8088)
-// This works everywhere: on 5G mobile data, Wi-Fi, and bypasses Android cleartext restrictions
-export const API_BASE_URL = 'https://growth-calculated-cheap-time.trycloudflare.com/api/v1';
+// Permanent 24/7 Production Cloud Backend on Render + Cloud PostgreSQL
+export const API_BASE_URL = 'https://streakup-backend-02pl.onrender.com/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
