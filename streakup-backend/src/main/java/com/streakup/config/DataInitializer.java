@@ -59,19 +59,5 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(demoUser);
             log.info("✅ Default demo user alex@streakup.app seeded (password: password123)");
         }
-
-        if (userRepository.findByEmail("prakashjadhav9380@gmail.com").isEmpty()) {
-            User ownerUser = new User(
-                    "prakashjadhav9380@gmail.com",
-                    passwordEncoder.encode("password123"),
-                    "Prakash Jadhav"
-            );
-            ownerUser.setXpPoints(200);
-            ownerUser.setCurrentLevel(3);
-            ownerUser.setStreakShields(3);
-            ownerUser.setPro(true);
-            userRepository.save(ownerUser);
-            log.info("✅ Owner user prakashjadhav9380@gmail.com seeded (password: password123)");
-        }
     }
 }

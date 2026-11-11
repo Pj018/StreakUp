@@ -41,14 +41,22 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already registered: " + request.getEmail());
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email address is required.");
+        }
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters long.");
+        }
+
+        String normalizedEmail = request.getEmail().toLowerCase().trim();
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("An account with this email already exists (" + normalizedEmail + "). Please sign in or reset your password.");
         }
 
         User user = new User(
-                request.getEmail().toLowerCase().trim(),
+                normalizedEmail,
                 passwordEncoder.encode(request.getPassword()),
-                request.getFullName().trim()
+                request.getFullName() != null && !request.getFullName().isBlank() ? request.getFullName().trim() : "Member"
         );
         user = userRepository.save(user);
 
@@ -76,12 +84,28 @@ public class AuthService {
     }
 
     public AuthResponse login(AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail().toLowerCase().trim(), request.getPassword())
-        );
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Please enter your email address.");
+        }
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Please enter your password.");
+        }
 
-        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        String email = request.getEmail().toLowerCase().trim();
+
+        // Check if user exists first to give clear feedback
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) {
+            throw new IllegalArgumentException("No account found with " + email + ". Please tap 'Create Account Free' to sign up.");
+        }
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, request.getPassword())
+            );
+        } catch (org.springframework.security.authentication.BadCredentialsException e) {
+            throw new IllegalArgumentException("Incorrect password for " + email + ". Please try again or tap 'Forgot Password?' to reset it.");
+        }
 
         String token = jwtUtils.generateToken(user.getEmail(), user.getId());
 

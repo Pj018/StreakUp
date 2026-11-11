@@ -102,8 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Alert.alert('Welcome to StreakUp! 🎉', 'Your account has been created successfully.');
     } catch (err: any) {
       const errMsg =
-        err.response?.data?.error ||
         err.response?.data?.message ||
+        err.response?.data?.error ||
         (err.code === 'ECONNABORTED'
           ? 'Connection timed out. Please check your internet connection.'
           : err.message === 'Network Error'
