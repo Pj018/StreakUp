@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useHabits } from '../context/HabitContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Category } from '../types';
 import PaywallModal from './PaywallModal';
 import CustomTimePickerModal from './CustomTimePickerModal';
@@ -52,6 +53,7 @@ const COLORS = ['#4F46E5', '#EC4899', '#10B981', '#F59E0B', '#0284C7', '#8B5CF6'
 export default function HabitsManageScreen() {
   const { habits, createHabit, archiveHabit } = useHabits();
   const { user } = useAuth();
+  const { isDark, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -160,11 +162,11 @@ export default function HabitsManageScreen() {
   const safeTopPadding = Math.max(insets.top, 46) + 12;
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: safeTopPadding }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { paddingTop: safeTopPadding, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View>
-          <Text style={styles.headerTitle}>MANAGE ROUTINE</Text>
-          <Text style={styles.headerSub}>Create & organize your daily habits</Text>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>MANAGE ROUTINE</Text>
+          <Text style={[styles.headerSub, { color: colors.textSecondary }]}>Create & organize your daily habits</Text>
         </View>
         <View
           style={[
@@ -173,6 +175,8 @@ export default function HabitsManageScreen() {
               ? styles.counterBadgePro
               : isLimitReached
               ? styles.counterBadgeLimit
+              : isDark
+              ? { backgroundColor: '#1E1807', borderColor: '#78350F' }
               : styles.counterBadgeNormal,
           ]}
         >
@@ -188,6 +192,8 @@ export default function HabitsManageScreen() {
                 ? styles.habitsCounterPro
                 : isLimitReached
                 ? styles.habitsCounterLimit
+                : isDark
+                ? { color: '#FCD34D' }
                 : styles.habitsCounterNormal,
             ]}
           >
@@ -202,21 +208,21 @@ export default function HabitsManageScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Create Habit Card */}
-        <View style={styles.createCard}>
+        <View style={[styles.createCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
           <View style={styles.cardHeaderRow}>
-            <Ionicons name="add-circle" size={20} color="#4F46E5" />
-            <Text style={styles.cardHeader}>ADD NEW DAILY GOAL</Text>
+            <Ionicons name="add-circle" size={20} color={isDark ? '#818CF8' : '#4F46E5'} />
+            <Text style={[styles.cardHeader, { color: isDark ? '#818CF8' : '#4F46E5' }]}>ADD NEW DAILY GOAL</Text>
           </View>
 
           {/* Free Limit Warning Banner when 4 habits already reached */}
           {isLimitReached && (
-            <View style={styles.limitWarningCard}>
-              <View style={styles.limitWarningIcon}>
-                <Ionicons name="lock-closed" size={20} color="#EA580C" />
+            <View style={[styles.limitWarningCard, { backgroundColor: isDark ? '#1C1306' : '#FFF7ED', borderColor: isDark ? '#B45309' : '#FED7AA' }]}>
+              <View style={[styles.limitWarningIcon, { backgroundColor: isDark ? '#2D1F08' : '#FFEDD5' }]}>
+                <Ionicons name="lock-closed" size={20} color={colors.flamePrimary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.limitWarningTitle}>Free Limit Reached (4/4 Habits)</Text>
-                <Text style={styles.limitWarningDesc}>
+                <Text style={[styles.limitWarningTitle, { color: isDark ? '#FCD34D' : '#9A3412' }]}>Free Limit Reached (4/4 Habits)</Text>
+                <Text style={[styles.limitWarningDesc, { color: isDark ? '#FDE68A' : '#C2410C' }]}>
                   Free tier allows up to 4 daily habits. Upgrade to StreakUp PRO for unlimited routines, cloud sync & streak freeze!
                 </Text>
               </View>
@@ -233,33 +239,34 @@ export default function HabitsManageScreen() {
             </View>
           )}
 
-          <Text style={styles.label}>Habit Name</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Habit Name</Text>
           <TextInput
-            style={[styles.input, isLimitReached && styles.inputDisabled]}
+            style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }, isLimitReached && styles.inputDisabled]}
             placeholder="e.g. Read 20 mins, Cold Shower, Gym Workout"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             value={title}
             onChangeText={setTitle}
             editable={!isLimitReached}
           />
 
-          <Text style={styles.label}>Daily Target / Cue</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Daily Target / Cue</Text>
           <TextInput
-            style={[styles.input, isLimitReached && styles.inputDisabled]}
+            style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }, isLimitReached && styles.inputDisabled]}
             placeholder="e.g. 7:00 AM right after morning tea"
-            placeholderTextColor="#94A3B8"
+            placeholderTextColor="#64748B"
             value={description}
             onChangeText={setDescription}
             editable={!isLimitReached}
           />
 
-          <Text style={styles.label}>Category</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Category</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
             {CATEGORIES.map(cat => (
               <TouchableOpacity
                 key={cat}
                 style={[
                   styles.catPill,
+                  { backgroundColor: isDark ? '#131D33' : '#F1F5F9', borderColor: colors.border },
                   selectedCategory === cat && styles.catPillSelected,
                   isLimitReached && { opacity: 0.6 },
                 ]}
@@ -328,6 +335,7 @@ export default function HabitsManageScreen() {
                 key={preset.id}
                 style={[
                   styles.catPill,
+                  { backgroundColor: isDark ? '#141E33' : '#F8FAFC', borderColor: colors.border },
                   selectedReminder.id === preset.id && styles.catPillSelected,
                   isLimitReached && { opacity: 0.6 },
                 ]}
@@ -347,6 +355,7 @@ export default function HabitsManageScreen() {
                 <Text
                   style={[
                     styles.catText,
+                    { color: colors.textSecondary },
                     selectedReminder.id === preset.id && styles.catTextSelected,
                   ]}
                 >
@@ -360,6 +369,7 @@ export default function HabitsManageScreen() {
               style={[
                 styles.catPill,
                 styles.customPill,
+                { backgroundColor: isDark ? '#141E33' : '#EEF2FF', borderColor: isDark ? '#6366F1' : '#C7D2FE' },
                 selectedReminder.id === 'custom' && styles.customPillSelected,
                 isLimitReached && { opacity: 0.6 },
               ]}
@@ -376,7 +386,7 @@ export default function HabitsManageScreen() {
               <Ionicons
                 name="time-outline"
                 size={14}
-                color={selectedReminder.id === 'custom' ? '#FFFFFF' : '#4F46E5'}
+                color={selectedReminder.id === 'custom' ? '#FFFFFF' : (isDark ? '#818CF8' : '#4F46E5')}
                 style={{ marginRight: 4 }}
               />
               <Text
@@ -384,7 +394,7 @@ export default function HabitsManageScreen() {
                   styles.catText,
                   selectedReminder.id === 'custom'
                     ? styles.catTextSelected
-                    : styles.customPillText,
+                    : [styles.customPillText, { color: isDark ? '#818CF8' : '#4F46E5' }],
                 ]}
               >
                 {selectedReminder.id === 'custom' ? selectedReminder.label : '+ Custom Time'}
@@ -406,38 +416,38 @@ export default function HabitsManageScreen() {
               <Text style={styles.proLockedBtnText}>Free Limit (4/4) — Unlock Unlimited with PRO</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.addBtn} onPress={handleCreate} activeOpacity={0.85}>
+            <TouchableOpacity style={[styles.addBtn, { backgroundColor: colors.flamePrimary }]} onPress={handleCreate} activeOpacity={0.85}>
               <Text style={styles.addBtnText}>+ Add to Daily Routine</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Existing Habits */}
-        <Text style={styles.subSectionTitle}>ACTIVE HABITS ({habits.length})</Text>
+        <Text style={[styles.subSectionTitle, { color: colors.textSecondary }]}>ACTIVE HABITS ({habits.length})</Text>
         <View style={styles.habitsList}>
           {habits.map(habit => (
-            <View key={habit.id} style={styles.habitItem}>
+            <View key={habit.id} style={[styles.habitItem, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
               <View style={[styles.itemDot, { backgroundColor: habit.color || '#4F46E5' }]} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.itemTitle}>{habit.title}</Text>
-                <Text style={styles.itemMeta}>
+                <Text style={[styles.itemTitle, { color: colors.textPrimary }]}>{habit.title}</Text>
+                <Text style={[styles.itemMeta, { color: colors.textSecondary }]}>
                   {habit.category} • Streak: {habit.currentStreak} Days 🔥
                   {habit.reminderTime ? ` • 🔔 ${formatReminderDisplay(habit.reminderTime)}` : ''}
                 </Text>
               </View>
               <View style={styles.actionButtonsRow}>
                 <TouchableOpacity
-                  style={styles.editBtn}
+                  style={[styles.editBtn, { backgroundColor: isDark ? '#141E33' : '#EEF2FF' }]}
                   onPress={() => {
                     triggerHaptic.light();
                     setEditingHabit(habit);
                   }}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="pencil-outline" size={17} color="#4F46E5" />
+                  <Ionicons name="pencil-outline" size={17} color={isDark ? '#818CF8' : '#4F46E5'} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.archiveBtn}
+                  style={[styles.archiveBtn, { backgroundColor: isDark ? '#2D1212' : '#FEF2F2' }]}
                   onPress={() => handleArchive(habit.id, habit.title)}
                   activeOpacity={0.7}
                 >

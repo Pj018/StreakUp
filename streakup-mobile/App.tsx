@@ -12,6 +12,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { Ionicons } from '@expo/vector-icons';
 import * as Updates from 'expo-updates';
 
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { HabitProvider } from './src/context/HabitContext';
 
@@ -27,14 +28,15 @@ type AuthScreenType = 'Login' | 'Register';
 
 function MainApp() {
   const { user, isLoading } = useAuth();
+  const { isDark, colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('Today');
   const [authScreen, setAuthScreen] = useState<AuthScreenType>('Login');
   const insets = useSafeAreaInsets();
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#4F46E5" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.flamePrimary} />
       </View>
     );
   }
@@ -46,8 +48,8 @@ function MainApp() {
     };
 
     return (
-      <View style={styles.container}>
-        <StatusBar style="dark" />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
         {authScreen === 'Login' ? (
           <LoginScreen navigation={authNav} />
         ) : (
@@ -74,30 +76,47 @@ function MainApp() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="dark" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Active Screen */}
       <View style={styles.screenContainer}>{renderScreen()}</View>
 
-      {/* Clean Light Bottom Tab Bar with safe bottom inset */}
-      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      {/* Themed Bottom Tab Bar */}
+      <View
+        style={[
+          styles.tabBar,
+          {
+            backgroundColor: colors.tabBarBg,
+            borderTopColor: colors.tabBarBorder,
+            paddingBottom: Math.max(insets.bottom, 12),
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.tabItem}
           onPress={() => setActiveTab('Today')}
           activeOpacity={0.7}
         >
-          <View style={[styles.tabIconWrap, activeTab === 'Today' && styles.tabIconWrapActiveOrange]}>
+          <View
+            style={[
+              styles.tabIconWrap,
+              activeTab === 'Today' && {
+                backgroundColor: isDark ? 'rgba(255, 107, 0, 0.16)' : '#FFF7ED',
+              },
+            ]}
+          >
             <Ionicons
               name={activeTab === 'Today' ? 'flame' : 'flame-outline'}
               size={22}
-              color={activeTab === 'Today' ? '#EA580C' : '#94A3B8'}
+              color={activeTab === 'Today' ? colors.flamePrimary : colors.textMuted}
             />
           </View>
           <Text
             style={[
               styles.tabLabel,
-              activeTab === 'Today' && styles.tabLabelActiveToday,
+              { color: colors.textMuted },
+              activeTab === 'Today' && { color: colors.flamePrimary, fontWeight: '800' },
             ]}
           >
             Today
@@ -109,17 +128,25 @@ function MainApp() {
           onPress={() => setActiveTab('Habits')}
           activeOpacity={0.7}
         >
-          <View style={[styles.tabIconWrap, activeTab === 'Habits' && styles.tabIconWrapActiveIndigo]}>
+          <View
+            style={[
+              styles.tabIconWrap,
+              activeTab === 'Habits' && {
+                backgroundColor: isDark ? 'rgba(99, 102, 241, 0.16)' : '#EEF2FF',
+              },
+            ]}
+          >
             <Ionicons
               name={activeTab === 'Habits' ? 'list' : 'list-outline'}
               size={22}
-              color={activeTab === 'Habits' ? '#4F46E5' : '#94A3B8'}
+              color={activeTab === 'Habits' ? colors.accentIndigo : colors.textMuted}
             />
           </View>
           <Text
             style={[
               styles.tabLabel,
-              activeTab === 'Habits' && styles.tabLabelActive,
+              { color: colors.textMuted },
+              activeTab === 'Habits' && { color: colors.accentIndigo, fontWeight: '800' },
             ]}
           >
             Habits
@@ -131,17 +158,25 @@ function MainApp() {
           onPress={() => setActiveTab('Stats')}
           activeOpacity={0.7}
         >
-          <View style={[styles.tabIconWrap, activeTab === 'Stats' && styles.tabIconWrapActiveGreen]}>
+          <View
+            style={[
+              styles.tabIconWrap,
+              activeTab === 'Stats' && {
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5',
+              },
+            ]}
+          >
             <Ionicons
               name={activeTab === 'Stats' ? 'stats-chart' : 'stats-chart-outline'}
               size={22}
-              color={activeTab === 'Stats' ? '#10B981' : '#94A3B8'}
+              color={activeTab === 'Stats' ? colors.accentGreen : colors.textMuted}
             />
           </View>
           <Text
             style={[
               styles.tabLabel,
-              activeTab === 'Stats' && styles.tabLabelActiveStats,
+              { color: colors.textMuted },
+              activeTab === 'Stats' && { color: colors.accentGreen, fontWeight: '800' },
             ]}
           >
             Stats
@@ -153,17 +188,25 @@ function MainApp() {
           onPress={() => setActiveTab('Badges')}
           activeOpacity={0.7}
         >
-          <View style={[styles.tabIconWrap, activeTab === 'Badges' && styles.tabIconWrapActiveGold]}>
+          <View
+            style={[
+              styles.tabIconWrap,
+              activeTab === 'Badges' && {
+                backgroundColor: isDark ? 'rgba(245, 158, 11, 0.16)' : '#FEF3C7',
+              },
+            ]}
+          >
             <Ionicons
               name={activeTab === 'Badges' ? 'trophy' : 'trophy-outline'}
               size={22}
-              color={activeTab === 'Badges' ? '#D97706' : '#94A3B8'}
+              color={activeTab === 'Badges' ? '#F59E0B' : colors.textMuted}
             />
           </View>
           <Text
             style={[
               styles.tabLabel,
-              activeTab === 'Badges' && styles.tabLabelActiveBadges,
+              { color: colors.textMuted },
+              activeTab === 'Badges' && { color: '#F59E0B', fontWeight: '800' },
             ]}
           >
             Badges
@@ -185,7 +228,7 @@ export default function App() {
           await Updates.reloadAsync();
         }
       } catch (e) {
-        // Safe fallback if offline
+        // Silent update check
       }
     }
 
@@ -196,11 +239,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <HabitProvider>
-          <MainApp />
-        </HabitProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <HabitProvider>
+            <MainApp />
+          </HabitProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -208,29 +253,21 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   screenContainer: {
     flex: 1,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
     paddingTop: 8,
     justifyContent: 'space-around',
     alignItems: 'center',
-    shadowColor: '#64748B',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
     elevation: 8,
   },
   tabItem: {
@@ -243,37 +280,8 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 12,
   },
-  tabIconWrapActiveOrange: {
-    backgroundColor: '#FFF7ED',
-  },
-  tabIconWrapActiveIndigo: {
-    backgroundColor: '#EEF2FF',
-  },
-  tabIconWrapActiveGreen: {
-    backgroundColor: '#ECFDF5',
-  },
-  tabIconWrapActiveGold: {
-    backgroundColor: '#FEF3C7',
-  },
   tabLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#94A3B8',
-  },
-  tabLabelActiveToday: {
-    color: '#EA580C',
-    fontWeight: '800',
-  },
-  tabLabelActive: {
-    color: '#4F46E5',
-    fontWeight: '800',
-  },
-  tabLabelActiveStats: {
-    color: '#10B981',
-    fontWeight: '800',
-  },
-  tabLabelActiveBadges: {
-    color: '#D97706',
-    fontWeight: '800',
   },
 });

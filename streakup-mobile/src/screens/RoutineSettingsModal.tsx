@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, ThemeMode } from '../context/ThemeContext';
 import { triggerHaptic } from '../utils/haptics';
 import soundEffects from '../utils/soundEffects';
 import notificationService from '../utils/notificationService';
@@ -31,6 +33,7 @@ interface Props {
 
 export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }: Props) {
   const { user, logout, deleteAccount } = useAuth();
+  const { isDark, colors, themeMode, setThemeMode } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [morningReminder, setMorningReminder] = useState(true);
@@ -45,6 +48,50 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsInitialTab, setTermsInitialTab] = useState<'terms' | 'privacy'>('terms');
   const [showPlanComparison, setShowPlanComparison] = useState(false);
+
+  // Restore user preferences
+  useEffect(() => {
+    AsyncStorage.multiGet([
+      '@streakup_pref_morning',
+      '@streakup_pref_evening',
+      '@streakup_pref_haptics',
+      '@streakup_pref_sound',
+    ]).then(values => {
+      if (values[0][1] !== null) setMorningReminder(values[0][1] === 'true');
+      if (values[1][1] !== null) setEveningReminder(values[1][1] === 'true');
+      if (values[2][1] !== null) setHapticsEnabled(values[2][1] === 'true');
+      if (values[3][1] !== null) {
+        const snd = values[3][1] === 'true';
+        setSoundEnabled(snd);
+        soundEffects.setSoundEnabled(snd);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleMorningToggle = (val: boolean) => {
+    triggerHaptic.light();
+    setMorningReminder(val);
+    AsyncStorage.setItem('@streakup_pref_morning', String(val)).catch(() => {});
+  };
+
+  const handleEveningToggle = (val: boolean) => {
+    triggerHaptic.light();
+    setEveningReminder(val);
+    AsyncStorage.setItem('@streakup_pref_evening', String(val)).catch(() => {});
+  };
+
+  const handleHapticsToggle = (val: boolean) => {
+    triggerHaptic.light();
+    setHapticsEnabled(val);
+    AsyncStorage.setItem('@streakup_pref_haptics', String(val)).catch(() => {});
+  };
+
+  const handleSoundToggle = (val: boolean) => {
+    triggerHaptic.light();
+    setSoundEnabled(val);
+    soundEffects.setSoundEnabled(val);
+    AsyncStorage.setItem('@streakup_pref_sound', String(val)).catch(() => {});
+  };
 
   const safeTopPadding = Math.max(insets.top, 46) + 8;
 
@@ -114,25 +161,25 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <View style={[styles.container, { paddingTop: safeTopPadding }]}>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: safeTopPadding }]}>
         {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>PROFILE & SETTINGS</Text>
+        <View style={[styles.headerRow, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>PROFILE & SETTINGS</Text>
           <TouchableOpacity
-            style={styles.closeBtn}
+            style={[styles.closeBtn, { backgroundColor: isDark ? '#141E33' : '#F1F5F9' }]}
             onPress={() => {
               triggerHaptic.light();
               onClose();
             }}
             activeOpacity={0.7}
           >
-            <Ionicons name="close" size={24} color="#64748B" />
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* User Profile Card */}
-          <View style={styles.profileCard}>
+          <View style={[styles.profileCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.profileTopRow}>
               {/* Avatar with Camera edit button */}
               <TouchableOpacity
@@ -143,7 +190,7 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
                 }}
                 activeOpacity={0.8}
               >
-                <View style={styles.avatarCircle}>
+                <View style={[styles.avatarCircle, { backgroundColor: isDark ? '#141E33' : '#EEF2FF', borderColor: isDark ? colors.flamePrimary : '#4F46E5' }]}>
                   {hasCustomImage ? (
                     <Image source={{ uri: user!.avatarUrl }} style={styles.avatarImage} />
                   ) : (
@@ -157,25 +204,25 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
 
               <View style={{ flex: 1 }}>
                 <View style={styles.userNameRow}>
-                  <Text style={styles.userName}>{user?.fullName || 'Hero'}</Text>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>{user?.fullName || 'Hero'}</Text>
                   {user?.isPro ? (
                     <View style={styles.proPill}>
                       <Text style={styles.proPillText}>★ PRO</Text>
                     </View>
                   ) : null}
                   <TouchableOpacity
-                    style={styles.editPencilBtn}
+                    style={[styles.editPencilBtn, { backgroundColor: isDark ? '#141E33' : '#EEF2FF' }]}
                     onPress={() => {
                       triggerHaptic.light();
                       setShowEditProfile(true);
                     }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="pencil" size={14} color="#4F46E5" />
+                    <Ionicons name="pencil" size={14} color={isDark ? '#818CF8' : '#4F46E5'} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.userEmail}>{user?.email || ''}</Text>
-                <Text style={styles.userStatsSub}>
+                <Text style={[styles.userEmail, { color: colors.textSecondary }]}>{user?.email || ''}</Text>
+                <Text style={[styles.userStatsSub, { color: colors.textMuted }]}>
                   Level {user?.currentLevel ?? 1} • {user?.xpPoints ?? 0} XP • {user?.streakShields ?? 1} Shields
                 </Text>
               </View>
@@ -183,21 +230,21 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
 
             {/* Discipline Bio (if set) */}
             {user?.bio ? (
-              <View style={styles.bioBox}>
-                <Ionicons name="sparkles" size={14} color="#EA580C" />
-                <Text style={styles.bioText}>"{user.bio}"</Text>
+              <View style={[styles.bioBox, { backgroundColor: isDark ? '#141E33' : '#FFF7ED', borderColor: isDark ? colors.border : '#FED7AA' }]}>
+                <Ionicons name="sparkles" size={14} color={colors.flamePrimary} />
+                <Text style={[styles.bioText, { color: isDark ? colors.textPrimary : '#9A3412' }]}>"{user.bio}"</Text>
               </View>
             ) : (
               <TouchableOpacity
-                style={styles.addBioBtn}
+                style={[styles.addBioBtn, { backgroundColor: isDark ? '#141E33' : '#EEF2FF' }]}
                 onPress={() => {
                   triggerHaptic.light();
                   setShowEditProfile(true);
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="add-circle-outline" size={15} color="#4F46E5" />
-                <Text style={styles.addBioText}>Add Discipline Motto / Bio</Text>
+                <Ionicons name="add-circle-outline" size={15} color={isDark ? '#818CF8' : '#4F46E5'} />
+                <Text style={[styles.addBioText, { color: isDark ? '#818CF8' : '#4F46E5' }]}>Add Discipline Motto / Bio</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -205,24 +252,24 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
           {/* Pro Membership Banner */}
           {!user?.isPro ? (
             <TouchableOpacity
-              style={styles.upgradeCard}
+              style={[styles.upgradeCard, { backgroundColor: isDark ? '#1B1405' : '#FFF7ED', borderColor: isDark ? '#B45309' : '#FED7AA' }]}
               onPress={() => {
                 onClose();
                 onOpenPaywall();
               }}
               activeOpacity={0.85}
             >
-              <View style={styles.upgradeIcon}>
-                <Ionicons name="sparkles" size={20} color="#EA580C" />
+              <View style={[styles.upgradeIcon, { backgroundColor: isDark ? 'rgba(255, 107, 0, 0.2)' : '#FFEDD5' }]}>
+                <Ionicons name="sparkles" size={20} color={colors.flamePrimary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.upgradeTitle}>Unlock StreakUp PRO</Text>
-                <Text style={styles.upgradeSub}>Unlimited habits, freeze shields & advanced heatmaps</Text>
+                <Text style={[styles.upgradeTitle, { color: isDark ? '#FCD34D' : '#9A3412' }]}>Unlock StreakUp PRO</Text>
+                <Text style={[styles.upgradeSub, { color: isDark ? '#FBBF24' : '#C2410C' }]}>Unlimited habits, freeze shields & advanced heatmaps</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#EA580C" />
+              <Ionicons name="chevron-forward" size={18} color={colors.flamePrimary} />
             </TouchableOpacity>
           ) : (
-            <View style={styles.proActiveCard}>
+            <View style={[styles.proActiveCard, { backgroundColor: isDark ? '#06281E' : '#ECFDF5', borderColor: isDark ? '#059669' : '#A7F3D0' }]}>
               <Ionicons name="shield-checkmark" size={20} color="#10B981" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.proActiveTitle}>StreakUp PRO Active</Text>
@@ -233,135 +280,222 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
 
           {/* Feature Comparison Pill */}
           <TouchableOpacity
-            style={styles.compareBtn}
+            style={[styles.compareBtn, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
             onPress={() => {
               triggerHaptic.light();
               setShowPlanComparison(true);
             }}
             activeOpacity={0.8}
           >
-            <View style={styles.compareIcon}>
-              <Ionicons name="stats-chart" size={16} color="#4F46E5" />
+            <View style={[styles.compareIcon, { backgroundColor: isDark ? '#141E33' : '#EEF2FF' }]}>
+              <Ionicons name="stats-chart" size={16} color={isDark ? '#818CF8' : '#4F46E5'} />
             </View>
-            <Text style={styles.compareBtnText}>Compare Free vs PRO Plans</Text>
-            <Ionicons name="chevron-forward" size={16} color="#64748B" />
+            <Text style={[styles.compareBtnText, { color: colors.textPrimary }]}>Compare Free vs PRO Plans</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
           </TouchableOpacity>
 
+          {/* ================= APPEARANCE & THEME SECTION ================= */}
+          <Text style={[styles.sectionHeading, { color: colors.textSecondary }]}>APPEARANCE & THEME</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View style={styles.themeRow}>
+              <TouchableOpacity
+                style={[
+                  styles.themeOptionBtn,
+                  {
+                    backgroundColor: themeMode === 'dark' ? '#FF6B00' : isDark ? '#141E33' : '#F1F5F9',
+                    borderColor: themeMode === 'dark' ? '#FF6B00' : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic.medium();
+                  setThemeMode('dark');
+                }}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name="moon"
+                  size={16}
+                  color={themeMode === 'dark' ? '#FFFFFF' : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.themeOptionText,
+                    { color: themeMode === 'dark' ? '#FFFFFF' : colors.textSecondary },
+                    themeMode === 'dark' && { fontWeight: '800' },
+                  ]}
+                >
+                  AMOLED Dark
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.themeOptionBtn,
+                  {
+                    backgroundColor: themeMode === 'light' ? '#4F46E5' : isDark ? '#141E33' : '#F1F5F9',
+                    borderColor: themeMode === 'light' ? '#4F46E5' : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic.medium();
+                  setThemeMode('light');
+                }}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name="sunny"
+                  size={16}
+                  color={themeMode === 'light' ? '#FFFFFF' : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.themeOptionText,
+                    { color: themeMode === 'light' ? '#FFFFFF' : colors.textSecondary },
+                    themeMode === 'light' && { fontWeight: '800' },
+                  ]}
+                >
+                  Clean Light
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.themeOptionBtn,
+                  {
+                    backgroundColor: themeMode === 'system' ? '#10B981' : isDark ? '#141E33' : '#F1F5F9',
+                    borderColor: themeMode === 'system' ? '#10B981' : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic.medium();
+                  setThemeMode('system');
+                }}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name="phone-portrait-outline"
+                  size={16}
+                  color={themeMode === 'system' ? '#FFFFFF' : colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.themeOptionText,
+                    { color: themeMode === 'system' ? '#FFFFFF' : colors.textSecondary },
+                    themeMode === 'system' && { fontWeight: '800' },
+                  ]}
+                >
+                  System
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* Reminders & Routine Section */}
-          <Text style={styles.sectionHeading}>DAILY ROUTINE REMINDERS</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionHeading, { color: colors.textSecondary }]}>DAILY ROUTINE REMINDERS</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.settingItem}>
-              <View style={[styles.settingIconWrap, { backgroundColor: '#FFEDD5' }]}>
-                <Ionicons name="sunny" size={20} color="#EA580C" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? 'rgba(255, 107, 0, 0.2)' : '#FFEDD5' }]}>
+                <Ionicons name="sunny" size={20} color={colors.flamePrimary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Morning Kickstart</Text>
-                <Text style={styles.settingSub}>08:00 AM • Plan habits & set intention</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Morning Kickstart</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>08:00 AM • Plan habits & set intention</Text>
               </View>
               <Switch
                 value={morningReminder}
-                onValueChange={val => {
-                  triggerHaptic.light();
-                  setMorningReminder(val);
-                }}
-                trackColor={{ false: '#E2E8F0', true: '#FED7AA' }}
-                thumbColor={morningReminder ? '#EA580C' : '#94A3B8'}
+                onValueChange={handleMorningToggle}
+                trackColor={{ false: isDark ? '#1E293B' : '#E2E8F0', true: isDark ? '#B45309' : '#FED7AA' }}
+                thumbColor={morningReminder ? colors.flamePrimary : colors.textMuted}
               />
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
             <View style={styles.settingItem}>
-              <View style={[styles.settingIconWrap, { backgroundColor: '#EEF2FF' }]}>
-                <Ionicons name="moon" size={20} color="#4F46E5" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF' }]}>
+                <Ionicons name="moon" size={20} color={isDark ? '#818CF8' : '#4F46E5'} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Night Streak Saver</Text>
-                <Text style={styles.settingSub}>08:30 PM • Rescue uncompleted habits</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Night Streak Saver</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>08:30 PM • Rescue uncompleted habits</Text>
               </View>
               <Switch
                 value={eveningReminder}
-                onValueChange={val => {
-                  triggerHaptic.light();
-                  setEveningReminder(val);
-                }}
-                trackColor={{ false: '#E2E8F0', true: '#C7D2FE' }}
-                thumbColor={eveningReminder ? '#4F46E5' : '#94A3B8'}
+                onValueChange={handleEveningToggle}
+                trackColor={{ false: isDark ? '#1E293B' : '#E2E8F0', true: isDark ? '#4338CA' : '#C7D2FE' }}
+                thumbColor={eveningReminder ? (isDark ? '#818CF8' : '#4F46E5') : colors.textMuted}
               />
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
-            <TouchableOpacity style={styles.testBtn} onPress={handleTestReminder} activeOpacity={0.75}>
-              <Ionicons name="notifications-outline" size={18} color="#4F46E5" />
-              <Text style={styles.testBtnText}>Send Test Reminder Notification</Text>
+            <TouchableOpacity
+              style={[styles.testBtn, { backgroundColor: isDark ? '#141E33' : '#EEF2FF' }]}
+              onPress={handleTestReminder}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="notifications-outline" size={18} color={isDark ? '#818CF8' : '#4F46E5'} />
+              <Text style={[styles.testBtnText, { color: isDark ? '#818CF8' : '#4F46E5' }]}>Send Test Reminder Notification</Text>
             </TouchableOpacity>
           </View>
 
           {/* Sensory Feedback Section */}
-          <Text style={styles.sectionHeading}>HAPTICS & SOUND</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionHeading, { color: colors.textSecondary }]}>HAPTICS & SOUND</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.settingItem}>
-              <View style={[styles.settingIconWrap, { backgroundColor: '#ECFDF5' }]}>
-                <Ionicons name="hardware-chip-outline" size={20} color="#059669" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : '#ECFDF5' }]}>
+                <Ionicons name="hardware-chip-outline" size={20} color="#10B981" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Haptic Touch Feedback</Text>
-                <Text style={styles.settingSub}>Vibrate phone on habit completions & XP claims</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Haptic Touch Feedback</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>Vibrate phone on habit completions & XP claims</Text>
               </View>
               <Switch
                 value={hapticsEnabled}
-                onValueChange={val => {
-                  triggerHaptic.light();
-                  setHapticsEnabled(val);
-                }}
-                trackColor={{ false: '#E2E8F0', true: '#A7F3D0' }}
-                thumbColor={hapticsEnabled ? '#059669' : '#94A3B8'}
+                onValueChange={handleHapticsToggle}
+                trackColor={{ false: isDark ? '#1E293B' : '#E2E8F0', true: isDark ? '#065F46' : '#A7F3D0' }}
+                thumbColor={hapticsEnabled ? '#10B981' : colors.textMuted}
               />
             </View>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
             <View style={styles.settingItem}>
-              <View style={[styles.settingIconWrap, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="volume-medium-outline" size={20} color="#D97706" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
+                <Ionicons name="volume-medium-outline" size={20} color="#F59E0B" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Audio Chimes & Effects</Text>
-                <Text style={styles.settingSub}>Play satisfying sounds on task completions & level-ups</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Audio Chimes & Effects</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>Play satisfying sounds on task completions & level-ups</Text>
               </View>
               <Switch
                 value={soundEnabled}
-                onValueChange={val => {
-                  triggerHaptic.light();
-                  setSoundEnabled(val);
-                  soundEffects.setSoundEnabled(val);
-                }}
-                trackColor={{ false: '#E2E8F0', true: '#FDE68A' }}
-                thumbColor={soundEnabled ? '#D97706' : '#94A3B8'}
+                onValueChange={handleSoundToggle}
+                trackColor={{ false: isDark ? '#1E293B' : '#E2E8F0', true: isDark ? '#78350F' : '#FDE68A' }}
+                thumbColor={soundEnabled ? '#F59E0B' : colors.textMuted}
               />
             </View>
 
             {soundEnabled && (
               <>
-                <View style={styles.divider} />
+                <View style={[styles.divider, { backgroundColor: colors.divider }]} />
                 <View style={styles.soundTestRow}>
                   <TouchableOpacity
-                    style={styles.soundTestBtn}
+                    style={[styles.soundTestBtn, { backgroundColor: isDark ? '#141E33' : '#F8FAFC', borderColor: colors.border }]}
                     onPress={() => soundEffects.playCompleteSound()}
                     activeOpacity={0.75}
                   >
-                    <Ionicons name="sparkles" size={14} color="#EA580C" />
-                    <Text style={styles.soundTestBtnText}>Test Chime 🔔</Text>
+                    <Ionicons name="sparkles" size={14} color={colors.flamePrimary} />
+                    <Text style={[styles.soundTestBtnText, { color: colors.textPrimary }]}>Test Chime 🔔</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={styles.soundTestBtn}
+                    style={[styles.soundTestBtn, { backgroundColor: isDark ? '#141E33' : '#F8FAFC', borderColor: colors.border }]}
                     onPress={() => soundEffects.playLevelUpSound()}
                     activeOpacity={0.75}
                   >
-                    <Ionicons name="trophy" size={14} color="#D97706" />
-                    <Text style={styles.soundTestBtnText}>Test Fanfare 🎺</Text>
+                    <Ionicons name="trophy" size={14} color="#F59E0B" />
+                    <Text style={[styles.soundTestBtnText, { color: colors.textPrimary }]}>Test Fanfare 🎺</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -369,8 +503,8 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
           </View>
 
           {/* Account & Security Section */}
-          <Text style={styles.sectionHeading}>ACCOUNT & SECURITY</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionHeading, { color: colors.textSecondary }]}>ACCOUNT & SECURITY</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <TouchableOpacity
               style={styles.actionRowItem}
               onPress={() => {
@@ -379,17 +513,17 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               }}
               activeOpacity={0.75}
             >
-              <View style={[styles.settingIconWrap, { backgroundColor: '#EEF2FF' }]}>
-                <Ionicons name="lock-closed-outline" size={18} color="#4F46E5" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : '#EEF2FF' }]}>
+                <Ionicons name="lock-closed-outline" size={18} color={isDark ? '#818CF8' : '#4F46E5'} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Change Password</Text>
-                <Text style={styles.settingSub}>Update your BCrypt salted account password</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Change Password</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>Update your BCrypt salted account password</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
             <TouchableOpacity
               style={styles.actionRowItem}
@@ -399,20 +533,20 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               }}
               activeOpacity={0.75}
             >
-              <View style={[styles.settingIconWrap, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="image-outline" size={18} color="#D97706" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
+                <Ionicons name="image-outline" size={18} color="#F59E0B" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Change Profile Photo</Text>
-                <Text style={styles.settingSub}>Upload selfie, gallery photo or pick avatar</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Change Profile Photo</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>Upload selfie, gallery photo or pick avatar</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* Legal & Compliance Section */}
-          <Text style={styles.sectionHeading}>LEGAL & POLICIES</Text>
-          <View style={styles.settingsGroup}>
+          <Text style={[styles.sectionHeading, { color: colors.textSecondary }]}>LEGAL & POLICIES</Text>
+          <View style={[styles.settingsGroup, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <TouchableOpacity
               style={styles.actionRowItem}
               onPress={() => {
@@ -422,17 +556,17 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               }}
               activeOpacity={0.75}
             >
-              <View style={[styles.settingIconWrap, { backgroundColor: '#F1F5F9' }]}>
-                <Ionicons name="document-text-outline" size={18} color="#475569" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+                <Ionicons name="document-text-outline" size={18} color={colors.textSecondary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Terms & Conditions</Text>
-                <Text style={styles.settingSub}>Usage terms, streak rules & subscription guidelines</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Terms & Conditions</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>Usage terms, streak rules & subscription guidelines</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
             <TouchableOpacity
               style={styles.actionRowItem}
@@ -443,38 +577,40 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
               }}
               activeOpacity={0.75}
             >
-              <View style={[styles.settingIconWrap, { backgroundColor: '#ECFDF5' }]}>
-                <Ionicons name="shield-checkmark-outline" size={18} color="#059669" />
+              <View style={[styles.settingIconWrap, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+                <Ionicons name="shield-outline" size={18} color={colors.textSecondary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.settingTitle}>Privacy Policy</Text>
-                <Text style={styles.settingSub}>Zero data selling • End-to-end encryption</Text>
+                <Text style={[styles.settingTitle, { color: colors.textPrimary }]}>Privacy Policy</Text>
+                <Text style={[styles.settingSub, { color: colors.textSecondary }]}>Data retention, GDPR & Play Store compliance</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
-          {/* App Build & Logout */}
-          <View style={styles.appMetaCard}>
+          {/* App Metadata Card */}
+          <View style={[styles.appMetaCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.metaRow}>
               <View style={styles.onlineDot} />
-              <Text style={styles.metaTitle}>StreakUp Cloud • Connected to PostgreSQL</Text>
+              <Text style={[styles.metaTitle, { color: colors.textPrimary }]}>StreakUp v1.0.0 (OTA Ready)</Text>
             </View>
-            <Text style={styles.metaSub}>Build v1.0.0 (Release 58) • Spring Boot 3 Engine</Text>
+            <Text style={[styles.metaSub, { color: colors.textSecondary }]}>Cloud Backend: 24/7 Production Online (PostgreSQL 16)</Text>
 
+            {/* Logout Button */}
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
               <Ionicons name="log-out-outline" size={18} color="#DC2626" />
-              <Text style={styles.logoutBtnText}>Log Out Account</Text>
+              <Text style={styles.logoutBtnText}>Log Out of StreakUp</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.deleteAccountBtn} onPress={handleDeleteAccount} activeOpacity={0.8}>
-              <Ionicons name="trash-outline" size={15} color="#94A3B8" />
-              <Text style={styles.deleteAccountBtnText}>Delete Account & Data (Permanent)</Text>
+            {/* Delete Account Button (Compliance) */}
+            <TouchableOpacity style={styles.deleteAccountBtn} onPress={handleDeleteAccount} activeOpacity={0.7}>
+              <Ionicons name="trash-outline" size={14} color="#94A3B8" />
+              <Text style={styles.deleteAccountBtnText}>Delete Account & Data</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
 
-        {/* Sub-modals */}
+        {/* Modals */}
         <AvatarPickerModal
           visible={showAvatarPicker}
           onClose={() => setShowAvatarPicker(false)}
@@ -512,7 +648,6 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
   },
   headerRow: {
     flexDirection: 'row',
@@ -521,35 +656,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#0F172A',
     letterSpacing: 0.5,
   },
   closeBtn: {
     padding: 6,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
   },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
   },
   profileCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#64748B',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-    marginBottom: 16,
+    elevation: 3,
   },
   profileTopRow: {
     flexDirection: 'row',
@@ -563,11 +688,9 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4F46E5',
+    alignItems: 'center',
+    justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImage: {
@@ -581,12 +704,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
+    backgroundColor: '#4F46E5',
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#4F46E5',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
@@ -596,110 +719,94 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   userName: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
-    color: '#0F172A',
   },
   editPencilBtn: {
     padding: 4,
-    backgroundColor: '#EEF2FF',
     borderRadius: 8,
   },
   proPill: {
-    backgroundColor: '#EA580C',
+    backgroundColor: '#10B981',
     paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   proPillText: {
-    fontSize: 10,
-    fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    fontWeight: '900',
+    fontSize: 9,
   },
   userEmail: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 2,
   },
   userStatsSub: {
     fontSize: 11,
-    color: '#059669',
-    fontWeight: '700',
     marginTop: 4,
+    fontWeight: '600',
   },
   bioBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 12,
     gap: 8,
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 14,
     borderWidth: 1,
-    borderColor: '#FED7AA',
   },
   bioText: {
-    flex: 1,
     fontSize: 12,
     fontStyle: 'italic',
-    color: '#9A3412',
     fontWeight: '600',
+    flex: 1,
   },
   addBioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
     gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    marginTop: 12,
+    alignSelf: 'flex-start',
   },
   addBioText: {
     fontSize: 12,
-    color: '#4F46E5',
     fontWeight: '700',
   },
   upgradeCard: {
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 14,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1.5,
-    borderColor: '#FED7AA',
-    borderRadius: 18,
-    padding: 14,
-    gap: 12,
-    marginBottom: 12,
+    gap: 14,
   },
   upgradeIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FFEDD5',
-    justifyContent: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   upgradeTitle: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#9A3412',
   },
   upgradeSub: {
     fontSize: 11,
-    color: '#C2410C',
     marginTop: 2,
   },
   proActiveCard: {
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 14,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderWidth: 1.5,
-    borderColor: '#A7F3D0',
-    borderRadius: 18,
-    padding: 14,
-    gap: 12,
-    marginBottom: 12,
+    gap: 14,
   },
   proActiveTitle: {
     fontSize: 14,
@@ -714,79 +821,77 @@ const styles = StyleSheet.create({
   compareBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    padding: 14,
+    marginTop: 12,
+    borderWidth: 1,
     gap: 10,
-    marginBottom: 20,
   },
   compareIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: 6,
+    borderRadius: 8,
   },
   compareBtnText: {
     flex: 1,
     fontSize: 13,
     fontWeight: '700',
-    color: '#334155',
   },
   sectionHeading: {
     fontSize: 11,
-    fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.8,
-    marginBottom: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginTop: 24,
+    marginBottom: 8,
     marginLeft: 4,
-    marginTop: 10,
   },
   settingsGroup: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  themeRow: {
+    flexDirection: 'row',
+    padding: 10,
+    gap: 8,
+  },
+  themeOptionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6,
+    borderWidth: 1,
+  },
+  themeOptionText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    gap: 12,
-  },
-  actionRowItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 13,
+    padding: 14,
     gap: 12,
   },
   settingIconWrap: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: 12,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   settingTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
   },
   settingSub: {
     fontSize: 11,
-    color: '#64748B',
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    marginLeft: 64,
   },
   testBtn: {
     flexDirection: 'row',
@@ -798,21 +903,18 @@ const styles = StyleSheet.create({
   testBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
   },
   soundTestRow: {
     flexDirection: 'row',
     gap: 10,
-    paddingVertical: 12,
+    padding: 12,
   },
   soundTestBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     paddingVertical: 10,
     borderRadius: 12,
     gap: 6,
@@ -820,15 +922,18 @@ const styles = StyleSheet.create({
   soundTestBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#334155',
+  },
+  actionRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
   },
   appMetaCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     padding: 16,
-    marginTop: 10,
+    marginTop: 20,
     alignItems: 'center',
   },
   metaRow: {
@@ -846,11 +951,9 @@ const styles = StyleSheet.create({
   metaTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#1E293B',
   },
   metaSub: {
     fontSize: 11,
-    color: '#64748B',
     marginTop: 2,
   },
   logoutBtn: {
