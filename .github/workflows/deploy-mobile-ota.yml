@@ -1,0 +1,38 @@
+name: Deploy Mobile OTA Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'streakup-mobile/**'
+      - '.github/workflows/deploy-mobile-ota.yml'
+
+jobs:
+  publish-ota:
+    name: Publish Live OTA Update to Preview Channel
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: streakup-mobile/package-lock.json
+
+      - name: 📦 Setup Expo & EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📥 Install Mobile Dependencies
+        working-directory: streakup-mobile
+        run: npm ci
+
+      - name: 🚀 Publish EAS Live Update
+        working-directory: streakup-mobile
+        run: eas update --branch preview --environment preview --message "Automated OTA update from commit ${{ github.sha }}" --non-interactive
