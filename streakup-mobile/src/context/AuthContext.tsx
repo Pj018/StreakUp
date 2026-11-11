@@ -105,14 +105,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         [STORAGE_KEY_USER, JSON.stringify(userObj)],
       ]);
     } catch (err: any) {
-      const errMsg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        (err.code === 'ECONNABORTED'
-          ? 'Server connection timed out (Render cloud warming up). Please try once more.'
-          : err.message === 'Network Error'
-          ? 'Unable to connect to server. Please check your internet connection.'
-          : 'Invalid email or password. Please verify your credentials.');
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      let errMsg = serverMsg;
+      if (!errMsg) {
+        if (err.code === 'ECONNABORTED' || err.message === 'Network Error') {
+          errMsg = 'Cloud server is waking up from sleep. We warmed it up for you — please tap Sign In once more!';
+        } else {
+          errMsg = 'Invalid email or password. Please verify your credentials or tap Create Account Free.';
+        }
+      }
       Alert.alert('Sign In Failed', errMsg);
     } finally {
       setIsLoading(false);
@@ -158,14 +159,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       Alert.alert('Welcome to StreakUp! 🎉', 'Your account has been created successfully.');
     } catch (err: any) {
-      const errMsg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        (err.code === 'ECONNABORTED'
-          ? 'Server connection timed out (Render cloud warming up). Please try once more.'
-          : err.message === 'Network Error'
-          ? 'Unable to reach server. Please check your internet connection.'
-          : 'Registration failed. This email may already be in use.');
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      let errMsg = serverMsg;
+      if (!errMsg) {
+        if (err.code === 'ECONNABORTED' || err.message === 'Network Error') {
+          errMsg = 'Cloud server is waking up from sleep. We warmed it up for you — please tap Create Account once more!';
+        } else {
+          errMsg = 'Registration failed. This email may already be in use.';
+        }
+      }
       Alert.alert('Sign Up Failed', errMsg);
     } finally {
       setIsLoading(false);

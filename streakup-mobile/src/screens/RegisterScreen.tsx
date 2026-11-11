@@ -9,14 +9,17 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { triggerHaptic } from '../utils/haptics';
 
 export default function RegisterScreen({ navigation }: any) {
   const { register, isLoading } = useAuth();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [fullName, setFullName] = useState('');
@@ -40,7 +43,7 @@ export default function RegisterScreen({ navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: safeTopPadding }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: safeTopPadding }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -56,55 +59,106 @@ export default function RegisterScreen({ navigation }: any) {
           {/* Top Bar with Back Button */}
           <View style={styles.topNavRow}>
             <TouchableOpacity
-              style={styles.backBtn}
+              style={[
+                styles.backBtn,
+                {
+                  backgroundColor: colors.surfaceCard,
+                  borderColor: colors.border,
+                },
+              ]}
               onPress={() => {
                 triggerHaptic.light();
                 navigation.navigate('Login');
               }}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={20} color="#0F172A" />
+              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
             </TouchableOpacity>
 
-            <View style={styles.topBadge}>
+            <View
+              style={[
+                styles.topBadge,
+                isDark && { backgroundColor: '#052219', borderColor: '#059669' },
+              ]}
+            >
               <Ionicons name="gift" size={13} color="#10B981" />
-              <Text style={styles.topBadgeText}>FREE ACCOUNT</Text>
+              <Text style={[styles.topBadgeText, isDark && { color: '#34D399' }]}>
+                FREE ACCOUNT
+              </Text>
             </View>
           </View>
 
           {/* Header */}
           <View style={styles.headerSection}>
-            <Text style={styles.title}>Join StreakUp 🚀</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Join StreakUp 🚀</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               Start with 4 free daily habits, claim +10 XP rewards, and never lose momentum.
             </Text>
           </View>
 
           {/* Perks Feature Ticker */}
           <View style={styles.perksBanner}>
-            <View style={styles.perkChip}>
+            <View
+              style={[
+                styles.perkChip,
+                {
+                  backgroundColor: colors.surfaceCard,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
               <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-              <Text style={styles.perkChipText}>Instant Level 1 Access</Text>
+              <Text style={[styles.perkChipText, { color: colors.textPrimary }]}>
+                Instant Level 1 Access
+              </Text>
             </View>
-            <View style={styles.perkChip}>
+            <View
+              style={[
+                styles.perkChip,
+                {
+                  backgroundColor: colors.surfaceCard,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
               <Ionicons name="shield-checkmark" size={14} color="#0284C7" />
-              <Text style={styles.perkChipText}>Free Streak Shields</Text>
+              <Text style={[styles.perkChipText, { color: colors.textPrimary }]}>
+                Free Streak Shields
+              </Text>
             </View>
           </View>
 
           {/* Form Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardHeader}>CREATE YOUR PROFILE</Text>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surfaceCard,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.cardHeader, { color: colors.textMuted }]}>
+              CREATE YOUR PROFILE
+            </Text>
 
             {/* Full Name */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <View style={styles.inputWrapper}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Full Name</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? '#141E33' : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <Ionicons name="person-outline" size={18} color="#64748B" style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="Alex Hunter"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   value={fullName}
                   onChangeText={setFullName}
                 />
@@ -113,13 +167,21 @@ export default function RegisterScreen({ navigation }: any) {
 
             {/* Email Address */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrapper}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? '#141E33' : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <Ionicons name="mail-outline" size={18} color="#64748B" style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="alex@streakup.app"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={email}
@@ -130,13 +192,21 @@ export default function RegisterScreen({ navigation }: any) {
 
             {/* Password */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? '#141E33' : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="At least 6 characters"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
@@ -149,16 +219,21 @@ export default function RegisterScreen({ navigation }: any) {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={19}
-                    color="#64748B"
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Security Guarantee */}
-            <View style={styles.securityBox}>
-              <Ionicons name="lock-closed" size={14} color="#059669" />
-              <Text style={styles.securityText}>
+            <View
+              style={[
+                styles.securityBox,
+                isDark && { backgroundColor: '#052219', borderColor: '#059669' },
+              ]}
+            >
+              <Ionicons name="lock-closed" size={14} color="#10B981" />
+              <Text style={[styles.securityText, isDark && { color: '#34D399' }]}>
                 Your passwords are encrypted with industry-standard BCrypt security.
               </Text>
             </View>
@@ -170,16 +245,25 @@ export default function RegisterScreen({ navigation }: any) {
               disabled={isLoading}
               activeOpacity={0.85}
             >
-              <Text style={styles.submitBtnText}>
-                {isLoading ? 'Creating Account...' : 'Get Started Free'}
-              </Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              {isLoading ? (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.submitBtnText}>Creating Account...</Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.submitBtnText}>Get Started Free</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </>
+              )}
             </TouchableOpacity>
           </View>
 
           {/* Footer Back to Login */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Already have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+              Already have an account?{' '}
+            </Text>
             <TouchableOpacity
               onPress={() => {
                 triggerHaptic.light();
@@ -372,8 +456,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   btnDisabled: {
-    opacity: 0.7,
+    opacity: 0.75,
   },
   submitBtnText: {
     color: '#FFFFFF',
@@ -397,3 +486,5 @@ const styles = StyleSheet.create({
     color: '#EA580C',
   },
 });
+
+

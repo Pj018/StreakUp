@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,23 +9,41 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { triggerHaptic } from '../utils/haptics';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 export default function LoginScreen({ navigation }: any) {
   const { login, quickDemoLogin, isLoading } = useAuth();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
 
   const safeTopPadding = Math.max(insets.top, 46) + 10;
+
+  // Track loading duration to show friendly "waking up" message if cold-start takes > 3s
+  useEffect(() => {
+    let timer: any;
+    if (isLoading) {
+      setLoadingSeconds(0);
+      timer = setInterval(() => {
+        setLoadingSeconds(s => s + 1);
+      }, 1000);
+    } else {
+      setLoadingSeconds(0);
+    }
+    return () => clearInterval(timer);
+  }, [isLoading]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -37,7 +55,7 @@ export default function LoginScreen({ navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: safeTopPadding }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: safeTopPadding }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
@@ -53,34 +71,73 @@ export default function LoginScreen({ navigation }: any) {
           {/* Header Branding */}
           <View style={styles.headerSection}>
             <View style={styles.logoBadgeWrap}>
-              <View style={styles.logoCircle}>
+              <View
+                style={[
+                  styles.logoCircle,
+                  isDark && {
+                    backgroundColor: '#131D33',
+                    borderColor: '#FF6B00',
+                    shadowColor: '#FF6B00',
+                  },
+                ]}
+              >
                 <Text style={styles.logoEmoji}>🔥</Text>
               </View>
-              <View style={styles.communityPill}>
-                <Ionicons name="sparkles" size={12} color="#EA580C" />
-                <Text style={styles.communityPillText}>STREAK MASTER CLUB</Text>
+              <View
+                style={[
+                  styles.communityPill,
+                  isDark && { backgroundColor: '#1E293B', borderColor: '#FF6B00' },
+                ]}
+              >
+                <Ionicons name="sparkles" size={12} color="#FF6B00" />
+                <Text style={[styles.communityPillText, isDark && { color: '#FF6B00' }]}>
+                  STREAK MASTER CLUB
+                </Text>
               </View>
             </View>
 
-            <Text style={styles.appName}>StreakUp</Text>
-            <Text style={styles.welcomeSubtitle}>
+            <Text style={[styles.appName, { color: colors.textPrimary }]}>StreakUp</Text>
+            <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>
               Welcome back! Build discipline, earn XP, and protect your daily streak.
             </Text>
           </View>
 
           {/* Login Form Card */}
-          <View style={styles.card}>
-            <Text style={styles.cardHeader}>SIGN IN TO YOUR ROUTINE</Text>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.surfaceCard,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.cardHeader, { color: colors.textMuted }]}>
+              SIGN IN TO YOUR ROUTINE
+            </Text>
 
             {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={18} color="#64748B" style={styles.inputIcon} />
+              <Text style={[styles.label, { color: colors.textPrimary }]}>Email Address</Text>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? '#141E33' : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="mail-outline"
+                  size={18}
+                  color={isDark ? '#64748B' : '#64748B'}
+                  style={styles.inputIcon}
+                />
                 <TextInput
-                  style={styles.input}
-                  placeholder="alex@streakup.app"
-                  placeholderTextColor="#94A3B8"
+                  style={[styles.input, { color: colors.textPrimary }]}
+                  placeholder="name@email.com"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={email}
@@ -92,7 +149,7 @@ export default function LoginScreen({ navigation }: any) {
             {/* Password Input */}
             <View style={styles.inputGroup}>
               <View style={styles.passwordLabelRow}>
-                <Text style={styles.label}>Password</Text>
+                <Text style={[styles.label, { color: colors.textPrimary }]}>Password</Text>
                 <TouchableOpacity
                   onPress={() => {
                     triggerHaptic.light();
@@ -103,12 +160,25 @@ export default function LoginScreen({ navigation }: any) {
                   <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                 </TouchableOpacity>
               </View>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
+              <View
+                style={[
+                  styles.inputWrapper,
+                  {
+                    backgroundColor: isDark ? '#141E33' : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={18}
+                  color={isDark ? '#64748B' : '#64748B'}
+                  style={styles.inputIcon}
+                />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.textPrimary }]}
                   placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={colors.textMuted}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
@@ -121,7 +191,7 @@ export default function LoginScreen({ navigation }: any) {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={19}
-                    color="#64748B"
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
@@ -134,30 +204,151 @@ export default function LoginScreen({ navigation }: any) {
               disabled={isLoading}
               activeOpacity={0.85}
             >
-              <Text style={styles.loginBtnText}>{isLoading ? 'Signing In...' : 'Sign In'}</Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+              {isLoading ? (
+                <View style={styles.loadingRow}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.loginBtnText}>
+                    {loadingSeconds > 3 ? 'Waking up cloud server...' : 'Signing In...'}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={styles.loginBtnText}>Sign In</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </>
+              )}
             </TouchableOpacity>
+
+            {/* Warming Up Notice */}
+            {isLoading && loadingSeconds > 2 && (
+              <View style={[styles.warmingUpBox, isDark && { backgroundColor: '#131D33', borderColor: '#1E293B' }]}>
+                <Ionicons name="cloud-outline" size={16} color="#FF6B00" />
+                <Text style={[styles.warmingUpText, isDark && { color: '#94A3B8' }]}>
+                  Connecting to Render cloud ({loadingSeconds}s). Server is spinning up, please hold on!
+                </Text>
+              </View>
+            )}
+
+            {/* Divider */}
+            <View style={styles.dividerRow}>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+              <Text style={[styles.dividerText, { color: colors.textMuted }]}>OR INSTANT ACCESS</Text>
+              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            </View>
+
+            {/* Instant Guest / Demo Mode Button */}
+            <TouchableOpacity
+              style={[
+                styles.demoBtn,
+                isDark && {
+                  backgroundColor: '#131D33',
+                  borderColor: '#1E293B',
+                },
+              ]}
+              onPress={() => {
+                triggerHaptic.medium();
+                quickDemoLogin();
+              }}
+              activeOpacity={0.8}
+            >
+              <View
+                style={[
+                  styles.demoIconWrap,
+                  isDark && { backgroundColor: '#1E293B' },
+                ]}
+              >
+                <Ionicons name="flash" size={18} color="#FF6B00" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.demoBtnTitle, isDark && { color: '#FFFFFF' }]}>
+                  🚀 Explore as Guest (Instant Demo)
+                </Text>
+                <Text style={[styles.demoBtnSub, isDark && { color: '#94A3B8' }]}>
+                  No login required • Habits, streaks, dark mode ready
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Fast Auto-fill Pills */}
+            <View style={styles.quickFillContainer}>
+              <Text style={[styles.quickFillHeader, { color: colors.textMuted }]}>
+                1-TAP CLOUD TEST ACCOUNTS:
+              </Text>
+              <View style={styles.quickFillRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.quickFillPill,
+                    {
+                      backgroundColor: isDark ? '#141E33' : '#F1F5F9',
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    triggerHaptic.light();
+                    setEmail('prakashjadhav9380@gmail.com');
+                    setPassword('password123');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="person" size={12} color="#10B981" />
+                  <Text style={[styles.quickFillText, { color: colors.textPrimary }]}>
+                    Prakash (Personal)
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.quickFillPill,
+                    {
+                      backgroundColor: isDark ? '#141E33' : '#F1F5F9',
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    triggerHaptic.light();
+                    setEmail('alex@streakup.app');
+                    setPassword('password123');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="sparkles" size={12} color="#FF6B00" />
+                  <Text style={[styles.quickFillText, { color: colors.textPrimary }]}>
+                    Alex (Demo)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
 
           {/* Social Proof / Gamification Highlights */}
-          <View style={styles.perksRow}>
+          <View
+            style={[
+              styles.perksRow,
+              {
+                backgroundColor: colors.surfaceCard,
+                borderColor: colors.border,
+              },
+            ]}
+          >
             <View style={styles.perkItem}>
               <Text style={styles.perkEmoji}>🛡️</Text>
-              <Text style={styles.perkLabel}>Streak Shields</Text>
+              <Text style={[styles.perkLabel, { color: colors.textSecondary }]}>Streak Shields</Text>
             </View>
             <View style={styles.perkItem}>
               <Text style={styles.perkEmoji}>⚡</Text>
-              <Text style={styles.perkLabel}>Level & XP</Text>
+              <Text style={[styles.perkLabel, { color: colors.textSecondary }]}>Level & XP</Text>
             </View>
             <View style={styles.perkItem}>
               <Text style={styles.perkEmoji}>📊</Text>
-              <Text style={styles.perkLabel}>8-Week Grid</Text>
+              <Text style={[styles.perkLabel, { color: colors.textSecondary }]}>8-Week Grid</Text>
             </View>
           </View>
 
           {/* Footer Register Link */}
           <View style={styles.footerRow}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+              Don't have an account?{' '}
+            </Text>
             <TouchableOpacity
               onPress={() => {
                 triggerHaptic.light();
@@ -201,7 +392,7 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     width: '100%',
   },
   logoBadgeWrap: {
@@ -263,7 +454,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 22,
+    padding: 20,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     shadowColor: '#64748B',
@@ -278,10 +469,10 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#64748B',
     letterSpacing: 1,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   label: {
     fontSize: 12,
@@ -337,8 +528,13 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   btnDisabled: {
-    opacity: 0.7,
+    opacity: 0.75,
   },
   loginBtnText: {
     color: '#FFFFFF',
@@ -346,10 +542,28 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0.3,
   },
+  warmingUpBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 10,
+    gap: 8,
+  },
+  warmingUpText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#9A3412',
+    lineHeight: 16,
+  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 18,
+    marginVertical: 14,
     gap: 10,
   },
   dividerLine: {
@@ -391,6 +605,38 @@ const styles = StyleSheet.create({
     color: '#B45309',
     marginTop: 1,
   },
+  quickFillContainer: {
+    marginTop: 12,
+  },
+  quickFillHeader: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  quickFillRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  quickFillPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+  },
+  quickFillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#334155',
+  },
   perksRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -430,3 +676,5 @@ const styles = StyleSheet.create({
     color: '#EA580C',
   },
 });
+
+
