@@ -3,6 +3,7 @@
     "name": "StreakUp",
     "slug": "streakup",
     "version": "1.0.0",
+    "description": "Gamified Daily Habit Tracker & Discipline Builder",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
