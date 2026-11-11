@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: streakup-backend
+    env: docker
+    dockerfilePath: streakup-backend/Dockerfile
+    dockerContext: streakup-backend
+    plan: free
+    region: oregon
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: streakup-db
+          property: connectionString
+      - key: SPRING_MAIL_USERNAME
+        value: prakashjadhav9380@gmail.com
+      - key: SPRING_MAIL_PASSWORD
+        value: ktaanczyxeunyfcu
+      - key: PORT
+        value: 10000
+
+databases:
+  - name: streakup-db
+    databaseName: streakup_db
+    user: streakup_user
+    plan: free
+    region: oregon
