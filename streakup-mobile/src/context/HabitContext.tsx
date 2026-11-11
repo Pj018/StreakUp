@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../api/client';
 import { Habit, Badge, HeatmapDay } from '../types';
 import { useAuth } from './AuthContext';
+
+const STORAGE_KEY_HABITS = '@streakup_cached_habits';
 
 interface HabitContextType {
   habits: Habit[];
@@ -100,8 +103,10 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (habitsRes.status === 'fulfilled' && Array.isArray(habitsRes.value.data) && habitsRes.value.data.length > 0) {
         setHabits(habitsRes.value.data);
-      } else {
-        setHabits(STARTER_HABITS);
+        AsyncStorage.setItem(STORAGE_KEY_HABITS, JSON.stringify(habitsRes.value.data)).catch(() => {});
+      } else if (habitsRes.status === 'fulfilled' && Array.isArray(habitsRes.value.data) && habitsRes.value.data.length === 0) {
+        setHabits([]);
+        AsyncStorage.setItem(STORAGE_KEY_HABITS, JSON.stringify([])).catch(() => {});
       }
 
       if (badgesRes.status === 'fulfilled' && Array.isArray(badgesRes.value.data) && badgesRes.value.data.length > 0) {
@@ -125,12 +130,25 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setBadges(DEFAULT_BADGES);
         setHeatmap([]);
       } else {
+        // First restore from local offline cache for instant UI
+        AsyncStorage.getItem(STORAGE_KEY_HABITS).then(cached => {
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setHabits(parsed);
+              }
+            } catch (e) {}
+          }
+        }).catch(() => {});
+
         refreshHabits();
       }
     } else {
       setHabits(STARTER_HABITS);
       setBadges(DEFAULT_BADGES);
       setHeatmap([]);
+      AsyncStorage.removeItem(STORAGE_KEY_HABITS).catch(() => {});
     }
   }, [user?.id]);
 

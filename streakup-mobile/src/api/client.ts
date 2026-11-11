@@ -6,7 +6,7 @@ export const API_BASE_URL = 'https://streakup-backend-02pl.onrender.com/api/v1';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 40000, // 40s cold-start buffer for cloud spin-up
   headers: {
     'Content-Type': 'application/json',
   },
