@@ -50,6 +50,19 @@ export default function TodayScreen() {
   const completionPercentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   const highestStreak = Math.max(0, ...habits.map(h => h.currentStreak));
 
+  const formatReminderDisplay = (timeStr?: string) => {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let h = parseInt(parts[0], 10);
+    const m = parts[1];
+    if (isNaN(h)) return timeStr;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+  };
+
   const filteredHabits = habits.filter(h => {
     if (activeFilter === 'PENDING') return !h.completedToday;
     if (activeFilter === 'DONE') return h.completedToday;
@@ -262,10 +275,18 @@ export default function TodayScreen() {
 
               <View style={styles.habitBody}>
                 <View style={styles.cardHeaderRow}>
-                  <View style={[styles.categoryBadge, { backgroundColor: (habit.color || '#4F46E5') + '15' }]}>
-                    <Text style={[styles.categoryBadgeText, { color: habit.color || '#4F46E5' }]}>
-                      {habit.category}
-                    </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={[styles.categoryBadge, { backgroundColor: (habit.color || '#4F46E5') + '15' }]}>
+                      <Text style={[styles.categoryBadgeText, { color: habit.color || '#4F46E5' }]}>
+                        {habit.category}
+                      </Text>
+                    </View>
+                    {habit.reminderTime ? (
+                      <View style={styles.reminderBadge}>
+                        <Ionicons name="notifications" size={10} color="#4F46E5" />
+                        <Text style={styles.reminderBadgeText}>{formatReminderDisplay(habit.reminderTime)}</Text>
+                      </View>
+                    ) : null}
                   </View>
 
                   <View style={styles.streakIndicator}>
@@ -760,6 +781,22 @@ const styles = StyleSheet.create({
   categoryBadgeText: {
     fontSize: 10,
     fontWeight: '800',
+  },
+  reminderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
+  },
+  reminderBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#4F46E5',
   },
   streakIndicator: {
     flexDirection: 'row',
