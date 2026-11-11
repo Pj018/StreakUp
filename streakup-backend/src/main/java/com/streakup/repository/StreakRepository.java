@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface StreakRepository extends JpaRepository<Streak, UUID> {
     Optional<Streak> findByHabitId(UUID habitId);
     List<Streak> findByUserId(UUID userId);
+    void deleteByUserId(UUID userId);
 }

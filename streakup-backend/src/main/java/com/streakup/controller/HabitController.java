@@ -62,6 +62,26 @@ public class HabitController {
         return ResponseEntity.ok(habitService.completeHabit(user, id, date));
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an existing habit (title, target, cue, category, reminderTime, color)")
+    public ResponseEntity<HabitResponse> updateHabit(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @Valid @RequestBody HabitRequest request) {
+        User user = getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(habitService.updateHabit(user, id, request));
+    }
+
+    @PostMapping("/{id}/undo")
+    @Operation(summary = "Undo habit completion for today or a specific date")
+    public ResponseEntity<HabitCompleteResponse> undoHabit(
+            Authentication authentication,
+            @PathVariable UUID id,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        User user = getAuthenticatedUser(authentication);
+        return ResponseEntity.ok(habitService.undoHabitCompletion(user, id, date));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Archive an existing habit")
     public ResponseEntity<Map<String, String>> archiveHabit(Authentication authentication, @PathVariable UUID id) {

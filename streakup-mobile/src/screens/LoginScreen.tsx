@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import { triggerHaptic } from '../utils/haptics';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 export default function LoginScreen({ navigation }: any) {
   const { login, quickDemoLogin, isLoading } = useAuth();
@@ -22,6 +23,7 @@ export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const safeTopPadding = Math.max(insets.top, 46) + 10;
 
@@ -91,6 +93,15 @@ export default function LoginScreen({ navigation }: any) {
             <View style={styles.inputGroup}>
               <View style={styles.passwordLabelRow}>
                 <Text style={styles.label}>Password</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic.light();
+                    setShowForgotPassword(true);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                </TouchableOpacity>
               </View>
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={18} color="#64748B" style={styles.inputIcon} />
@@ -159,6 +170,18 @@ export default function LoginScreen({ navigation }: any) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        visible={showForgotPassword}
+        initialEmail={email}
+        onClose={() => setShowForgotPassword(false)}
+        onSuccess={newEmail => {
+          setEmail(newEmail);
+          setShowForgotPassword(false);
+          Alert.alert('Password Updated', 'You can now sign in with your new password.');
+        }}
+      />
     </View>
   );
 }
@@ -270,6 +293,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  forgotPasswordText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#4F46E5',
+    marginBottom: 6,
   },
   inputWrapper: {
     flexDirection: 'row',

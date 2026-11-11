@@ -8,6 +8,7 @@ import {
   Modal,
   Dimensions,
   Image,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,7 +35,7 @@ const DISCIPLINE_QUOTES = [
 
 export default function TodayScreen() {
   const { user } = useAuth();
-  const { habits, completeHabit } = useHabits();
+  const { habits, completeHabit, undoHabitCompletion } = useHabits();
   const insets = useSafeAreaInsets();
   const [revivingHabit, setRevivingHabit] = useState<Habit | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -80,6 +81,29 @@ export default function TodayScreen() {
       setCelebrationToast(`🎉 +10 XP! "${habit.title}" completed!`);
       setTimeout(() => setCelebrationToast(null), 3500);
     }
+  };
+
+  const handleUndo = (habit: Habit) => {
+    triggerHaptic.light();
+    Alert.alert(
+      'Undo Habit Completion?',
+      `Mark "${habit.title}" as uncompleted for today? This will revert 10 XP.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Undo Completion',
+          style: 'destructive',
+          onPress: async () => {
+            triggerHaptic.medium();
+            const res = await undoHabitCompletion(habit.id);
+            if (res.success) {
+              setCelebrationToast(`↩️ "${habit.title}" uncompleted.`);
+              setTimeout(() => setCelebrationToast(null), 3000);
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Guaranteed safe top padding that completely clears phone status bar, clock, battery & notch
@@ -336,8 +360,14 @@ export default function TodayScreen() {
                   habit.completedToday && styles.checkButtonDone,
                   habit.streakStatus === 'BROKEN' && styles.checkButtonDisabled,
                 ]}
-                onPress={() => handleComplete(habit)}
-                disabled={habit.completedToday || habit.streakStatus === 'BROKEN'}
+                onPress={() => {
+                  if (habit.completedToday) {
+                    handleUndo(habit);
+                  } else {
+                    handleComplete(habit);
+                  }
+                }}
+                disabled={habit.streakStatus === 'BROKEN'}
                 activeOpacity={0.7}
               >
                 {habit.completedToday ? (

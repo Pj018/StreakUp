@@ -65,6 +65,23 @@ public class StreakService {
         return streakRepository.save(streak);
     }
 
+    @Transactional
+    public Streak undoHabitCompletion(User user, Habit habit, LocalDate completionDate) {
+        Streak streak = getOrCreateStreak(user, habit);
+        if (completionDate != null && completionDate.equals(streak.getLastCompletedDate())) {
+            int newStreak = Math.max(0, streak.getCurrentStreak() - 1);
+            streak.setCurrentStreak(newStreak);
+            if (newStreak == 0) {
+                streak.setLastCompletedDate(null);
+            } else {
+                streak.setLastCompletedDate(completionDate.minusDays(1));
+            }
+            streak.setUpdatedAt(LocalDateTime.now());
+            return streakRepository.save(streak);
+        }
+        return streak;
+    }
+
     /**
      * Revive a broken streak when user watches a rewarded video ad or uses a shield.
      */

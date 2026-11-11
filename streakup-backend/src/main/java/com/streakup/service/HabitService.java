@@ -190,6 +190,79 @@ public class HabitService {
         habitRepository.save(habit);
     }
 
+    @Transactional
+    public HabitResponse updateHabit(User user, UUID habitId, HabitRequest request) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Habit not found"));
+
+        if (request.getTitle() != null && !request.getTitle().trim().isEmpty()) {
+            habit.setTitle(request.getTitle().trim());
+        }
+        if (request.getDescription() != null) {
+            habit.setDescription(request.getDescription().trim());
+        }
+        if (request.getCategory() != null) {
+            habit.setCategory(request.getCategory());
+        }
+        if (request.getFrequencyType() != null) {
+            habit.setFrequencyType(request.getFrequencyType());
+        }
+        if (request.getTargetPerDay() > 0) {
+            habit.setTargetPerDay(request.getTargetPerDay());
+        }
+        habit.setReminderTime(request.getReminderTime());
+        if (request.getColor() != null && !request.getColor().isEmpty()) {
+            habit.setColor(request.getColor());
+        }
+        if (request.getIcon() != null && !request.getIcon().isEmpty()) {
+            habit.setIcon(request.getIcon());
+        }
+
+        habit = habitRepository.save(habit);
+        Streak streak = streakService.getOrCreateStreak(user, habit);
+        boolean completedToday = habitLogRepository.existsByHabitIdAndCompletedDate(habit.getId(), LocalDate.now());
+        return mapToResponse(habit, streak, completedToday);
+    }
+
+    @Transactional
+    public HabitCompleteResponse undoHabitCompletion(User user, UUID habitId, LocalDate completionDate) {
+        Habit habit = habitRepository.findByIdAndUserId(habitId, user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Habit not found"));
+
+        if (completionDate == null) {
+            completionDate = LocalDate.now();
+        }
+
+        Optional<HabitLog> logOpt = habitLogRepository.findByHabitIdAndCompletedDate(habitId, completionDate);
+        if (logOpt.isEmpty()) {
+            throw new IllegalStateException("Habit is not completed for " + completionDate);
+        }
+
+        habitLogRepository.delete(logOpt.get());
+
+        Streak streak = streakService.undoHabitCompletion(user, habit, completionDate);
+
+        int updatedXp = Math.max(0, user.getXpPoints() - xpPerCompletion);
+        user.setXpPoints(updatedXp);
+        int newLevel = gamificationService.calculateLevel(updatedXp);
+        user.setCurrentLevel(newLevel);
+        userRepository.save(user);
+
+        HabitCompleteResponse response = new HabitCompleteResponse();
+        response.setHabitId(habitId);
+        response.setSuccess(true);
+        response.setMessage("Habit completion undone for " + completionDate);
+        response.setCurrentStreak(streak.getCurrentStreak());
+        response.setLongestStreak(streak.getLongestStreak());
+        response.setStreakStatus(streak.getStatus());
+        response.setXpEarned(-xpPerCompletion);
+        response.setTotalXp(updatedXp);
+        response.setCurrentLevel(newLevel);
+        response.setLevelUp(false);
+        response.setNewlyUnlockedBadges(List.of());
+        return response;
+    }
+
     private HabitResponse mapToResponse(Habit habit, Streak streak, boolean completedToday) {
         HabitResponse res = new HabitResponse();
         res.setId(habit.getId());

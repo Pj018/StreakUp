@@ -96,4 +96,50 @@ public class AuthService {
                 user.isPro()
         );
     }
+
+    @Transactional
+    public void forgotPassword(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
+            // Generate 6 digit numeric OTP
+            String otp = String.format("%06d", new java.security.SecureRandom().nextInt(1000000));
+            user.setResetPasswordOtp(otp);
+            user.setResetPasswordOtpExpiry(java.time.LocalDateTime.now().plusMinutes(15));
+            userRepository.save(user);
+
+            emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getFullName(), otp);
+        });
+    }
+
+    @Transactional
+    public void resetPassword(String email, String otp, String newPassword) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (otp == null || otp.isBlank()) {
+            throw new IllegalArgumentException("Verification code (OTP) is required");
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters long");
+        }
+
+        User user = userRepository.findByEmail(email.toLowerCase().trim())
+                .orElseThrow(() -> new IllegalArgumentException("No account found with email: " + email));
+
+        if (user.getResetPasswordOtp() == null || !user.getResetPasswordOtp().equals(otp.trim())) {
+            throw new IllegalArgumentException("Invalid verification code (OTP). Please check and try again.");
+        }
+
+        if (user.getResetPasswordOtpExpiry() == null || user.getResetPasswordOtpExpiry().isBefore(java.time.LocalDateTime.now())) {
+            throw new IllegalArgumentException("Verification code has expired. Please request a new code.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetPasswordOtp(null);
+        user.setResetPasswordOtpExpiry(null);
+        userRepository.save(user);
+    }
 }

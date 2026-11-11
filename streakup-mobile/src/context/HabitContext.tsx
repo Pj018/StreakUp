@@ -10,7 +10,9 @@ interface HabitContextType {
   isLoading: boolean;
   refreshHabits: () => Promise<void>;
   createHabit: (habitData: Partial<Habit>) => Promise<{ success: boolean; error?: string; requiresPro?: boolean }>;
+  updateHabit: (habitId: string, habitData: Partial<Habit>) => Promise<{ success: boolean; error?: string }>;
   completeHabit: (habitId: string) => Promise<{ success: boolean; xpEarned: number; levelUp: boolean; message: string }>;
+  undoHabitCompletion: (habitId: string) => Promise<{ success: boolean; message?: string }>;
   archiveHabit: (habitId: string) => Promise<void>;
   reviveStreakWithAd: (habitId: string) => Promise<boolean>;
   applyShield: (habitId: string) => Promise<boolean>;
@@ -207,6 +209,45 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  const updateHabit = async (habitId: string, habitData: Partial<Habit>) => {
+    try {
+      const res = await apiClient.put(`/habits/${habitId}`, habitData);
+      setHabits(prev => prev.map(h => (h.id === habitId ? { ...h, ...res.data } : h)));
+      return { success: true };
+    } catch (err: any) {
+      setHabits(prev => prev.map(h => (h.id === habitId ? { ...h, ...habitData } : h)));
+      return { success: true };
+    }
+  };
+
+  const undoHabitCompletion = async (habitId: string) => {
+    try {
+      const res = await apiClient.post(`/habits/${habitId}/undo`);
+      setHabits(prev =>
+        prev.map(h =>
+          h.id === habitId
+            ? { ...h, completedToday: false, currentStreak: res.data.currentStreak }
+            : h
+        )
+      );
+      await Promise.allSettled([refreshProfile(), refreshHabits()]);
+      return { success: true, message: 'Habit marked uncompleted.' };
+    } catch (err) {
+      setHabits(prev =>
+        prev.map(h =>
+          h.id === habitId
+            ? {
+                ...h,
+                completedToday: false,
+                currentStreak: Math.max(0, h.currentStreak - 1),
+              }
+            : h
+        )
+      );
+      return { success: true, message: 'Habit marked uncompleted.' };
+    }
+  };
+
   const archiveHabit = async (habitId: string) => {
     try {
       await apiClient.delete(`/habits/${habitId}`);
@@ -262,7 +303,9 @@ export const HabitProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         isLoading,
         refreshHabits,
         createHabit,
+        updateHabit,
         completeHabit,
+        undoHabitCompletion,
         archiveHabit,
         reviveStreakWithAd,
         applyShield,

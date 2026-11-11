@@ -14,4 +14,5 @@ public interface HabitRepository extends JpaRepository<Habit, UUID> {
     long countByUserIdAndIsArchivedFalse(UUID userId);
     Optional<Habit> findByIdAndUserId(UUID id, UUID userId);
     List<Habit> findByIsArchivedFalse();
+    void deleteByUserId(UUID userId);
 }

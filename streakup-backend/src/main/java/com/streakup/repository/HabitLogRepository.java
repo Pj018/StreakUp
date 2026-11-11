@@ -16,4 +16,5 @@ public interface HabitLogRepository extends JpaRepository<HabitLog, UUID> {
     List<HabitLog> findByUserIdAndCompletedDate(UUID userId, LocalDate completedDate);
     List<HabitLog> findByUserIdAndCompletedDateBetweenOrderByCompletedDateAsc(UUID userId, LocalDate start, LocalDate end);
     long countByUserId(UUID userId);
+    void deleteByUserId(UUID userId);
 }

@@ -4,9 +4,7 @@ import com.streakup.model.dto.ChangePasswordRequest;
 import com.streakup.model.dto.UpdateProfileRequest;
 import com.streakup.model.dto.UserProfileResponse;
 import com.streakup.model.entity.User;
-import com.streakup.repository.HabitLogRepository;
-import com.streakup.repository.HabitRepository;
-import com.streakup.repository.UserRepository;
+import com.streakup.repository.*;
 import com.streakup.service.GamificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,9 +12,11 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -26,17 +26,26 @@ public class UserController {
     private final UserRepository userRepository;
     private final HabitRepository habitRepository;
     private final HabitLogRepository habitLogRepository;
+    private final StreakRepository streakRepository;
+    private final UserBadgeRepository userBadgeRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final GamificationService gamificationService;
     private final PasswordEncoder passwordEncoder;
 
     public UserController(UserRepository userRepository,
                           HabitRepository habitRepository,
                           HabitLogRepository habitLogRepository,
+                          StreakRepository streakRepository,
+                          UserBadgeRepository userBadgeRepository,
+                          SubscriptionRepository subscriptionRepository,
                           GamificationService gamificationService,
                           PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.habitRepository = habitRepository;
         this.habitLogRepository = habitLogRepository;
+        this.streakRepository = streakRepository;
+        this.userBadgeRepository = userBadgeRepository;
+        this.subscriptionRepository = subscriptionRepository;
         this.gamificationService = gamificationService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -111,5 +120,36 @@ public class UserController {
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of("message", "Password changed successfully!"));
+    }
+
+    @DeleteMapping("/account")
+    @Transactional
+    @Operation(summary = "Permanently delete user account and all routine data (Google Play Policy Compliance)")
+    public ResponseEntity<?> deleteAccount(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        UUID userId = user.getId();
+
+        // 1. Delete user badges
+        userBadgeRepository.deleteByUserId(userId);
+
+        // 2. Delete habit logs
+        habitLogRepository.deleteByUserId(userId);
+
+        // 3. Delete streaks
+        streakRepository.deleteByUserId(userId);
+
+        // 4. Delete habits
+        habitRepository.deleteByUserId(userId);
+
+        // 5. Delete subscriptions
+        subscriptionRepository.deleteByUserId(userId);
+
+        // 6. Delete user account
+        userRepository.delete(user);
+
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Your account and all associated data have been permanently deleted."
+        ));
     }
 }

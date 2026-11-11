@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { Category } from '../types';
 import PaywallModal from './PaywallModal';
 import CustomTimePickerModal from './CustomTimePickerModal';
+import EditHabitModal from './EditHabitModal';
 import soundEffects from '../utils/soundEffects';
 import notificationService from '../utils/notificationService';
 import { triggerHaptic } from '../utils/haptics';
@@ -59,6 +60,7 @@ export default function HabitsManageScreen() {
   const [selectedReminder, setSelectedReminder] = useState<ReminderItem>(REMINDER_PRESETS[0]);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<any>(null);
 
   // Free Tier Limit: Free users can only add up to 4 active habits
   const isLimitReached = !user?.isPro && habits.length >= 4;
@@ -423,13 +425,25 @@ export default function HabitsManageScreen() {
                   {habit.reminderTime ? ` • 🔔 ${formatReminderDisplay(habit.reminderTime)}` : ''}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={styles.archiveBtn}
-                onPress={() => handleArchive(habit.id, habit.title)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="trash-outline" size={18} color="#EF4444" />
-              </TouchableOpacity>
+              <View style={styles.actionButtonsRow}>
+                <TouchableOpacity
+                  style={styles.editBtn}
+                  onPress={() => {
+                    triggerHaptic.light();
+                    setEditingHabit(habit);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="pencil-outline" size={17} color="#4F46E5" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.archiveBtn}
+                  onPress={() => handleArchive(habit.id, habit.title)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={17} color="#EF4444" />
+                </TouchableOpacity>
+              </View>
             </View>
           ))}
         </View>
@@ -447,6 +461,13 @@ export default function HabitsManageScreen() {
         initialMinute={selectedReminder.minute >= 0 ? selectedReminder.minute : 0}
         onConfirm={handleCustomTimeConfirm}
         onClose={() => setShowTimePickerModal(false)}
+      />
+
+      {/* Edit Habit Modal */}
+      <EditHabitModal
+        habit={editingHabit}
+        visible={editingHabit !== null}
+        onClose={() => setEditingHabit(null)}
       />
     </View>
   );
@@ -750,5 +771,17 @@ const styles = StyleSheet.create({
   },
   archiveBtn: {
     padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FEF2F2',
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  editBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#EEF2FF',
   },
 });

@@ -30,7 +30,7 @@ interface Props {
 }
 
 export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }: Props) {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const insets = useSafeAreaInsets();
 
   const [morningReminder, setMorningReminder] = useState(true);
@@ -75,6 +75,29 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
           onPress: () => {
             onClose();
             logout();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    triggerHaptic.heavy();
+    Alert.alert(
+      '⚠️ Delete Account & All Data',
+      'Are you completely sure you want to permanently delete your StreakUp account? All your habits, streaks, badges, and routine history will be permanently erased. This action CANNOT be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Forever',
+          style: 'destructive',
+          onPress: async () => {
+            triggerHaptic.heavy();
+            onClose();
+            const res = await deleteAccount();
+            if (res.success) {
+              Alert.alert('Account Deleted', 'Your account and routine data have been permanently removed.');
+            }
           },
         },
       ]
@@ -442,6 +465,11 @@ export default function RoutineSettingsModal({ visible, onClose, onOpenPaywall }
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
               <Ionicons name="log-out-outline" size={18} color="#DC2626" />
               <Text style={styles.logoutBtnText}>Log Out Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.deleteAccountBtn} onPress={handleDeleteAccount} activeOpacity={0.8}>
+              <Ionicons name="trash-outline" size={15} color="#94A3B8" />
+              <Text style={styles.deleteAccountBtnText}>Delete Account & Data (Permanent)</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -842,5 +870,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#DC2626',
+  },
+  deleteAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginTop: 8,
+    gap: 6,
+  },
+  deleteAccountBtnText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

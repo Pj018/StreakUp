@@ -11,4 +11,5 @@ import java.util.UUID;
 public interface UserBadgeRepository extends JpaRepository<UserBadge, UUID> {
     List<UserBadge> findByUserIdOrderByUnlockedAtDesc(UUID userId);
     boolean existsByUserIdAndBadgeId(UUID userId, UUID badgeId);
+    void deleteByUserId(UUID userId);
 }

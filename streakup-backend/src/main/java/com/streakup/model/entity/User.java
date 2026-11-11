@@ -39,6 +39,12 @@ public class User {
     @Column(name = "bio", length = 300)
     private String bio;
 
+    @Column(name = "reset_password_otp", length = 10)
+    private String resetPasswordOtp;
+
+    @Column(name = "reset_password_otp_expiry")
+    private LocalDateTime resetPasswordOtpExpiry;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -93,6 +99,12 @@ public class User {
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public String getResetPasswordOtp() { return resetPasswordOtp; }
+    public void setResetPasswordOtp(String resetPasswordOtp) { this.resetPasswordOtp = resetPasswordOtp; }
+
+    public LocalDateTime getResetPasswordOtpExpiry() { return resetPasswordOtpExpiry; }
+    public void setResetPasswordOtpExpiry(LocalDateTime resetPasswordOtpExpiry) { this.resetPasswordOtpExpiry = resetPasswordOtpExpiry; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

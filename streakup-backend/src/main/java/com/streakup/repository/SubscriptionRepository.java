@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface SubscriptionRepository extends JpaRepository<Subscription, UUID> {
     Optional<Subscription> findTopByUserIdAndStatusOrderByStartDateDesc(UUID userId, String status);
+    void deleteByUserId(UUID userId);
 }

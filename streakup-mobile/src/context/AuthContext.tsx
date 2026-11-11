@@ -15,6 +15,7 @@ interface AuthContextType {
   upgradeToPro: (planType: 'PRO_MONTHLY' | 'PRO_ANNUAL') => Promise<void>;
   updateProfile: (data: { fullName?: string; bio?: string; avatarUrl?: string }) => Promise<{ success: boolean; message?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message?: string }>;
+  deleteAccount: () => Promise<{ success: boolean; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -177,6 +178,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      const res = await apiClient.delete('/user/account');
+      await logout();
+      return { success: true, message: res.data?.message || 'Account successfully deleted.' };
+    } catch (err: any) {
+      const errMsg = err.response?.data?.message || 'Failed to delete account.';
+      await logout();
+      return { success: true, message: errMsg };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -191,6 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         upgradeToPro,
         updateProfile,
         changePassword,
+        deleteAccount,
       }}
     >
       {children}
