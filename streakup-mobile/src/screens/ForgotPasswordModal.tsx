@@ -72,10 +72,15 @@ export default function ForgotPasswordModal({
       triggerHaptic.success();
       setStep('OTP');
       setCooldown(30);
+      Alert.alert(
+        'Code Sent 📬',
+        `A 6-digit verification code has been sent to ${email.trim()}. Please check your Gmail inbox and spam folder.`
+      );
     } catch (err: any) {
-      // Even on error, advance or show friendly message
-      setStep('OTP');
-      setCooldown(30);
+      const errMsg =
+        err.response?.data?.message ||
+        'Failed to send verification code. Please make sure this email is registered.';
+      Alert.alert('Account Notice', errMsg);
     } finally {
       setIsLoading(false);
     }

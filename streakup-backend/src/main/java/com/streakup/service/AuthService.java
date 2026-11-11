@@ -103,15 +103,17 @@ public class AuthService {
             throw new IllegalArgumentException("Email is required");
         }
 
-        userRepository.findByEmail(email.toLowerCase().trim()).ifPresent(user -> {
-            // Generate 6 digit numeric OTP
-            String otp = String.format("%06d", new java.security.SecureRandom().nextInt(1000000));
-            user.setResetPasswordOtp(otp);
-            user.setResetPasswordOtpExpiry(java.time.LocalDateTime.now().plusMinutes(15));
-            userRepository.save(user);
+        String normalizedEmail = email.toLowerCase().trim();
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("No account found with " + normalizedEmail + ". Please check the spelling or create an account first."));
 
-            emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getFullName(), otp);
-        });
+        // Generate 6 digit numeric OTP
+        String otp = String.format("%06d", new java.security.SecureRandom().nextInt(1000000));
+        user.setResetPasswordOtp(otp);
+        user.setResetPasswordOtpExpiry(java.time.LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+
+        emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getFullName(), otp);
     }
 
     @Transactional
